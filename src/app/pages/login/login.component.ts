@@ -21,7 +21,10 @@ export class LoginComponent {
     this.authService
       .login(this.loginObj.email, this.loginObj.password)
       .subscribe(
-        () => this.router.navigate(['/dashboard']),
+        (data) => {
+          window.localStorage.setItem('authToken', data.token);
+          this.router.navigate(['/dashboard']);
+        },
         (error) => alert('Login failed')
       );
   }
