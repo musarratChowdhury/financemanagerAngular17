@@ -1,5 +1,11 @@
 import { Component } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 
 @Component({
   selector: 'app-register',
@@ -17,10 +23,10 @@ export class RegisterComponent {
    */
   constructor(private builder: FormBuilder) {}
 
-  _regForm = this.builder.group({
-    username: this.builder.control('', Validators.required),
-    password: this.builder.control('', Validators.required),
-    confirmPassword: this.builder.control('', Validators.required),
+  _regForm = new FormGroup({
+    username: new FormControl('', Validators.email),
+    password: new FormControl('', Validators.required),
+    confirmPassword: new FormControl('', Validators.required),
   });
 
   proceedRegister() {}
