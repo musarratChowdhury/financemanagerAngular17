@@ -14,7 +14,27 @@
           placeholder="Password"
         />
       </label>
-      <button type="submit" class="btn btn-sm btn-info">Submit</button>
+      <label class="input input-bordered flex items-center gap-2">
+        <input
+          type="password"
+          class="grow text-white"
+          value="password"
+          placeholder="Password"
+        />
+      </label>
+      <button
+        type="submit"
+        [disabled]="isFormValid"
+        [attr.data-magicNumber]="magicNumber"
+        class="btn btn-sm btn-info"
+      >
+        Register
+      </button>
+      @if(isAdmin){
+      <button (click)="createUser($event)" class="btn btn-circle btn-secondary">
+        Erase
+      </button>
+      }
     </div>
   </div>
 </div>

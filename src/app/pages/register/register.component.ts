@@ -9,6 +9,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
   styleUrl: './register.component.css',
 })
 export class RegisterComponent {
+  isFormValid = true;
+  magicNumber = 100;
+  isAdmin = true;
   /**
    *
    */
@@ -21,4 +24,8 @@ export class RegisterComponent {
   });
 
   proceedRegister() {}
+
+  createUser(e: Event) {
+    console.log(e.target);
+  }
 }
