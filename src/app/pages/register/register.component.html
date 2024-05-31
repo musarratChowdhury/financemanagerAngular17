@@ -31,21 +31,12 @@
         </label>
         <button
           type="submit"
-          [disabled]="isFormValid"
+          [disabled]="!checkValidity()"
           [attr.data-magicNumber]="magicNumber"
           class="btn btn-sm btn-info"
         >
           Register
         </button>
-        <p>Form Status: {{ _regForm.status }}</p>
-        @if(isAdmin){
-        <button
-          (click)="createUser($event)"
-          class="btn btn-circle btn-secondary"
-        >
-          Erase
-        </button>
-        }
       </form>
     </div>
   </div>

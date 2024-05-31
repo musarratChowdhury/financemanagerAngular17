@@ -34,4 +34,8 @@ export class RegisterComponent {
   createUser(e: Event) {
     console.log(e.target);
   }
+
+  checkValidity() {
+    return this._regForm.status == 'VALID' ? true : false;
+  }
 }
