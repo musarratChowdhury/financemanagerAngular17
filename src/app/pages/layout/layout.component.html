@@ -1,27 +1,36 @@
-<h3 class="text-fuchsia-600">LAYOUT</h3>
-<nav>
-  <a
-    class="btn btn-sm btn-primary"
-    routerLinkActive="activebutton"
-    routerLink="/dashboard"
+<div class="contain-layout h-screen">
+  <div class="navbar bg-base-100">
+    <a class="btn btn-ghost text-xl">FM</a>
+    <a
+      class="btn btn-sm btn-primary"
+      routerLinkActive="activebutton"
+      routerLink="/dashboard"
     >dashboard</a
-  >
-  |
-  <a
-    class="btn btn-sm btn-primary"
-    routerLinkActive="activebutton"
-    routerLink="/expense-category"
+    >
+    |
+    <a
+      class="btn btn-sm btn-primary"
+      routerLinkActive="activebutton"
+      routerLink="/expense-category"
     >expense-category</a
-  >
-  |
-  <a
-    class="btn btn-sm btn-primary"
-    routerLinkActive="activebutton"
-    routerLink="/expense"
+    >
+    |
+    <a
+      class="btn btn-sm btn-primary"
+      routerLinkActive="activebutton"
+      routerLink="/expense"
     >expense</a
-  >
-</nav>
+    >
+  </div>
 
-<router-outlet></router-outlet>
+<div class="container mx-auto flex justify-center items-center min-h-svh">
+  <router-outlet></router-outlet>
+</div>
 
-<footer class="footer-title">copyright MusarratChowdhury 2024</footer>
+  <footer class="footer footer-center p-4 bg-base-300 text-base-content">
+    <aside>
+      <p>Copyright © 2024 - All right reserved by MushCorps Ltd</p>
+    </aside>
+  </footer>
+
+</div>
