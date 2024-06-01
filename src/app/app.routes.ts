@@ -6,6 +6,7 @@ import { RegisterComponent } from './pages/register/register.component';
 import { DashboardComponent } from './pages/layout/dashboard/dashboard.component';
 import { ExpenseCategoryComponent } from './pages/layout/expense-category/expense-category.component';
 import { ExpenseComponent } from './pages/layout/expense/expense.component';
+import {ExpenseTableComponent} from "./pages/layout/expense/expense-table/expense-table.component";
 
 export const routes: Routes = [
   {
@@ -43,6 +44,11 @@ export const routes: Routes = [
         title: 'Expense',
         component: ExpenseComponent,
       },
+      {
+        path:'expense-table',
+        title:"ExpenseTable",
+        component : ExpenseTableComponent
+      }
     ],
   },
 

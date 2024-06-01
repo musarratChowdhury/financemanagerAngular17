@@ -2,40 +2,10 @@
   <div class="card-body">
     <h2 class="card-title">Add New Expense</h2>
     <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()">
-      <label class="input input-bordered flex items-center mb-2">
-        <input
-          type="text"
-          class="grow text-white"
-          placeholder="Expense Title"
-          formControlName="expenseName"
-        />
-      </label>
-      <label class="input input-bordered flex items-center mb-2">
-        <input
-          type="number"
-          class="grow text-white"
-          placeholder="Expense Amount"
-          formControlName="expenseAmount"
-        />
-      </label>
-      <label class="input input-bordered flex items-center mb-2">
-        <input
-          type="date"
-          class="grow text-white"
-          placeholder="Expense Date"
-          formControlName="expenseDate"
-        />
-      </label>
-      <label class="input input-bordered flex items-center mb-2">
-        <select
-          class="text-white select w-full"
-          formControlName="expenseCategory"
-        >
-          <option disabled selected value="">Select Category</option>
-          <option>Han Solo</option>
-          <option>Greedo</option>
-        </select>
-      </label>
+      <ejs-textbox placeholder="Expense Title" floatLabelType="Auto" formControlName="expenseName" class="w-full"></ejs-textbox>
+      <ejs-numerictextbox placeholder="Expense Amount" floatLabelType="Auto" class="w-full" min="1" formControlName="expenseAmount"></ejs-numerictextbox>
+      <ejs-datepicker placeholder="Expense Date" floatLabelType="Auto" class="w-full" formControlName="expenseDate"></ejs-datepicker>
+      <ejs-dropdownlist formControlName="expenseCategory" id='games' #sample [dataSource]='categoryData' (change)='onChange($event)' [value]='' [fields]='fields' [placeholder]='waterMark' [popupHeight]='height'></ejs-dropdownlist>
       <button
         type="submit"
         [disabled]="!checkValidity()"
