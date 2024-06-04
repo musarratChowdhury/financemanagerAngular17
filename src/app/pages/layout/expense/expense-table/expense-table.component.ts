@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import {
   GridModule,
@@ -5,30 +6,36 @@ import {
   SortService,
   FilterService,
   GroupService,
-  PageSettingsModel
+  PageSettingsModel,
 } from '@syncfusion/ej2-angular-grids';
-import {data} from "../../../../../Data/TestData";
-
+import { data } from '../../../../../Data/TestData';
+import { DataService } from '../../../../services/data.service';
 @Component({
   selector: 'app-expense-table',
   standalone: true,
-  imports: [
-    GridModule
-  ],
+  imports: [GridModule],
 
-  providers: [PageService,
-    SortService,
-    FilterService,
-    GroupService],
+  providers: [PageService, SortService, FilterService, GroupService],
   templateUrl: './expense-table.component.html',
-  styleUrl: './expense-table.component.css'
+  styleUrl: './expense-table.component.css',
 })
-export class ExpenseTableComponent implements  OnInit{
+export class ExpenseTableComponent implements OnInit {
   public data?: object[];
   public pageSettings?: PageSettingsModel;
+  /**
+   *
+   */
+  constructor(private dataService: DataService) {}
   ngOnInit(): void {
     this.data = data;
     this.pageSettings = { pageSize: 6 };
+    this.dataService.getAll().subscribe({
+      next: (data) => {
+        console.log(data);
+      },
+      error: (err) => {
+        console.log(err.message);
+      },
+    });
   }
-
 }

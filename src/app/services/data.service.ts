@@ -3,9 +3,11 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-const API_URL = 'your_api_endpoint/';
+const API_URL = 'https://financemanager.duckdns.org/api/Expense/';
 const httpOptions = {
-  headers: new HttpHeaders({ 'Content-Type': 'application/json' }),
+  headers: new HttpHeaders({
+    'Content-Type': 'application/json',
+  }),
 };
 
 @Injectable({
@@ -31,7 +33,7 @@ export class DataService {
   // Read all items
   getAll(): Observable<any[]> {
     return this.http
-      .get<any[]>(API_URL, httpOptions)
+      .get<any[]>(API_URL + 'GetAll', httpOptions)
       .pipe(catchError(this.handleError));
   }
 
