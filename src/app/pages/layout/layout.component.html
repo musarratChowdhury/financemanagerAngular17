@@ -5,32 +5,38 @@
       class="btn btn-sm btn-primary"
       routerLinkActive="activebutton"
       routerLink="/dashboard"
-    >dashboard</a
+      >Dashboard</a
     >
     |
     <a
       class="btn btn-sm btn-primary"
       routerLinkActive="activebutton"
       routerLink="/expense-category"
-    >expense-category</a
+      >Expense-category</a
     >
     |
     <a
       class="btn btn-sm btn-primary"
       routerLinkActive="activebutton"
       routerLink="/expense"
-    >expense</a
+      >Expense</a
+    >
+    |
+    <a
+      class="btn btn-sm btn-primary"
+      routerLinkActive="activebutton"
+      routerLink="/expense-table"
+      >Expense Table</a
     >
   </div>
 
-<div class="container mx-auto flex justify-center items-center min-h-svh">
-  <router-outlet></router-outlet>
-</div>
+  <div class="container mx-auto flex justify-center items-center min-h-svh">
+    <router-outlet></router-outlet>
+  </div>
 
   <footer class="footer footer-center p-4 bg-base-300 text-base-content">
     <aside>
       <p>Copyright © 2024 - All right reserved by MushCorps Ltd</p>
     </aside>
   </footer>
-
 </div>
