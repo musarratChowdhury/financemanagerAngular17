@@ -9,6 +9,7 @@ import {
   PageSettingsModel,
 } from '@syncfusion/ej2-angular-grids';
 import { ExpenseService } from '../../../../services/expense.service';
+import { Expense } from '../../../../../models/Expense';
 @Component({
   selector: 'app-expense-table',
   standalone: true,
@@ -26,7 +27,7 @@ export class ExpenseTableComponent implements OnInit {
   ngOnInit(): void {
     this.pageSettings = { pageSize: 6 };
     this.dataService.getAll().subscribe({
-      next: (data) => {
+      next: (data: Expense[]) => {
         this.data = data;
         console.log(data);
       },
