@@ -50,7 +50,9 @@ export class ExpenseComponent implements OnInit {
 
   expenseForm = this.formBuilder.group({
     expenseName: ['', Validators.required],
-    expenseAmount: ['', Validators.min(0)],
+    expenseAmount: ['', Validators.min(1)],
+    expenseQuantity: ['', Validators.min(0)],
+    expenseUnitPrice: ['', Validators.min(0)],
     expenseDate: ['', Validators.required],
     expenseCategory: ['', Validators.required],
   });
@@ -72,6 +74,12 @@ export class ExpenseComponent implements OnInit {
       const expenseAmount = parseInt(
         this.expenseForm.get('expenseAmount')?.value!
       );
+      const expenseQuantity = parseInt(
+        this.expenseForm.get('expenseQuantity')?.value!
+      );
+      const expenseUnitPrice = parseInt(
+        this.expenseForm.get('expenseUnitPrice')?.value!
+      );
       const expenseDate = new Date(this.expenseForm.get('expenseDate')?.value!);
       const expenseCategory = parseInt(
         this.expenseForm.get('expenseCategory')?.value!
@@ -80,6 +88,8 @@ export class ExpenseComponent implements OnInit {
       let newExpense = new Expense(
         expenseName!,
         expenseAmount,
+        expenseQuantity,
+        expenseUnitPrice,
         expenseDate,
         expenseCategory
       );
