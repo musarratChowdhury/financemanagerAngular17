@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Expense } from '../../models/Expense';
 
-const API_URL = 'http://localhost:5006/api/Expense/';
+const API_URL = 'https://financemanager.duckdns.org/api/Expense/';
 const httpOptions = {
   headers: new HttpHeaders({
     'Content-Type': 'application/json',
