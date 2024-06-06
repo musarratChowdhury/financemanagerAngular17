@@ -5,7 +5,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
+import { DateTimePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import {
@@ -15,6 +15,7 @@ import {
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ExpenseCategory } from '../../../../models/ExpenseCategory';
+import { Expense } from '../../../../models/Expense';
 
 @Component({
   selector: 'app-expense',
@@ -22,7 +23,7 @@ import { ExpenseCategory } from '../../../../models/ExpenseCategory';
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    DatePickerModule,
+    DateTimePickerModule,
     NumericTextBoxModule,
     TextBoxModule,
     DropDownListModule,
@@ -67,7 +68,22 @@ export class ExpenseComponent implements OnInit {
   onSubmit() {
     console.log(this.expenseForm.value);
     if (this.checkValidity()) {
-      this.expenseService.create(this.expenseForm.value).subscribe({
+      const expenseName = this.expenseForm.get('expenseName')?.value;
+      const expenseAmount = parseInt(
+        this.expenseForm.get('expenseAmount')?.value!
+      );
+      const expenseDate = new Date(this.expenseForm.get('expenseDate')?.value!);
+      const expenseCategory = parseInt(
+        this.expenseForm.get('expenseCategory')?.value!
+      );
+
+      let newExpense = new Expense(
+        expenseName!,
+        expenseAmount,
+        expenseDate,
+        expenseCategory
+      );
+      this.expenseService.create(newExpense).subscribe({
         next: (data) => console.log(data),
         error: (err) => console.log(err),
       });

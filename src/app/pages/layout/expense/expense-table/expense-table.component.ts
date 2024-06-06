@@ -21,9 +21,7 @@ import { ExpenseService } from '../../../../services/expense.service';
 export class ExpenseTableComponent implements OnInit {
   public data?: object[];
   public pageSettings?: PageSettingsModel;
-  /**
-   *
-   */
+
   constructor(private dataService: ExpenseService) {}
   ngOnInit(): void {
     this.pageSettings = { pageSize: 6 };

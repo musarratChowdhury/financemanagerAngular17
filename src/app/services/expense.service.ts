@@ -2,8 +2,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { Expense } from '../../models/Expense';
 
-const API_URL = 'https://financemanager.duckdns.org/api/Expense/';
+const API_URL = 'http://localhost:5006/api/Expense/';
 const httpOptions = {
   headers: new HttpHeaders({
     'Content-Type': 'application/json',
@@ -17,7 +18,7 @@ export class ExpenseService {
   constructor(private http: HttpClient) {}
 
   // Create a new item
-  create(data: any): Observable<any> {
+  create(data: Expense): Observable<any> {
     return this.http
       .post(API_URL + 'Create', data, httpOptions)
       .pipe(catchError(this.handleError));
