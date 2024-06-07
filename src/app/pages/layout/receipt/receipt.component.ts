@@ -1,4 +1,4 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
   FormBuilder,
   FormsModule,
@@ -6,17 +6,26 @@ import {
   Validators,
 } from '@angular/forms';
 
+import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
+import { ExpenseCategoryService } from '../../../services/expense-category.service';
+import { ExpenseCategory } from '../../../../models/ExpenseCategory';
+import { Expense } from '../../../../models/Expense';
 import {
-  DropDownListModule,
-} from '@syncfusion/ej2-angular-dropdowns';
-import {ExpenseService} from '../../../services/expense.service';
-import {ExpenseCategoryService} from '../../../services/expense-category.service';
-import {ExpenseCategory} from '../../../../models/ExpenseCategory';
-import {Expense} from '../../../../models/Expense';
-import {GridComponent, GridModule, PageSettingsModel} from "@syncfusion/ej2-angular-grids";
-import {ToastComponent, ToastModule} from "@syncfusion/ej2-angular-notifications";
-import {NumericTextBoxModule, TextBoxModule} from "@syncfusion/ej2-angular-inputs";
-import {DateTimePickerModule} from "@syncfusion/ej2-angular-calendars";
+  GridComponent,
+  GridModule,
+  PageSettingsModel,
+} from '@syncfusion/ej2-angular-grids';
+import {
+  ToastComponent,
+  ToastModule,
+} from '@syncfusion/ej2-angular-notifications';
+import {
+  NumericTextBoxModule,
+  TextBoxModule,
+} from '@syncfusion/ej2-angular-inputs';
+import { DateTimePickerModule } from '@syncfusion/ej2-angular-calendars';
+import { Receipt } from '../../../../models/Receipt';
+import { ReceiptService } from '../../../services/receipt.service';
 
 @Component({
   selector: 'app-receipt',
@@ -32,9 +41,8 @@ import {DateTimePickerModule} from "@syncfusion/ej2-angular-calendars";
     DateTimePickerModule,
   ],
   templateUrl: './receipt.component.html',
-  styleUrl: './receipt.component.css'
+  styleUrl: './receipt.component.css',
 })
-
 export class ReceiptComponent implements OnInit {
   public expenseCategoryList: ExpenseCategory[] = [];
   public expenseList: Expense[] = [];
@@ -48,12 +56,12 @@ export class ReceiptComponent implements OnInit {
 
   constructor(
     private formBuilder: FormBuilder,
-    private expenseCategoryService: ExpenseCategoryService
-  ) {
-  }
+    private expenseCategoryService: ExpenseCategoryService,
+    private receiptService: ReceiptService
+  ) {}
 
   ngOnInit(): void {
-    this.pageSettings = {pageSize: 10};
+    this.pageSettings = { pageSize: 10 };
     this.expenseCategoryService.getAll().subscribe({
       next: (data) => {
         this.expenseCategoryList = data;
@@ -72,20 +80,18 @@ export class ReceiptComponent implements OnInit {
   });
 
   // maps the appropriate column to fields property
-  public fields: Object = {text: 'name', value: 'id'};
+  public fields: Object = { text: 'name', value: 'id' };
   // set the height of the popup element
   public height: string = '220px';
   // set the placeholder to DropDownList input element
   public waterMark: string = 'Select an Expense Category';
 
-
-  onSubmit() {
+  onExpenseSubmit() {
     console.log(this.expenseForm.value);
-
 
     const expenseName = this.expenseForm.get('expenseName')?.value;
 
-    if (this.expenseList.find(expense => expense.Cause === expenseName)) {
+    if (this.expenseList.find((expense) => expense.Cause === expenseName)) {
       // this.createNotification("Error", "Expense already exists")
       return;
     }
@@ -121,19 +127,50 @@ export class ReceiptComponent implements OnInit {
       if (this.grid) {
         this.grid.refresh();
       }
+    }
+  }
 
+  onReceiptSubmit() {
+    if (this.checkReceiptValidity()) {
+      let grandTotal = this.expenseList.reduce((total, expense) => {
+        let cost = expense.Amount * (expense.UnitPrice || 0);
+        if (expense.Quantity !== null) {
+          cost *= expense.Quantity;
+        }
+        return total + cost;
+      }, 0);
+      let TotalItems = this.expenseList.length;
+      let expenseDate = this.expenseList[0].ExpenseDate;
+      let newReceipt = new Receipt(
+        null,
+        grandTotal,
+        TotalItems,
+        expenseDate,
+        null,
+        null,
+        this.expenseList
+      );
+
+      this.receiptService.create(newReceipt).subscribe({
+        next: (data) => console.log(data),
+        error: (err) => console.error(err),
+      });
     }
   }
 
   onCreate(args: any) {
-    console.log(this.notification)
+    console.log(this.notification);
   }
 
   checkValidity() {
     return this.expenseForm.status == 'VALID' ? true : false;
   }
 
-  createNotification(title:string, content:string) {
+  checkReceiptValidity() {
+    return this.expenseList.length == 0 ? false : true;
+  }
+
+  createNotification(title: string, content: string) {
     this.notification_title.innerText = title;
     this.notification_content.innerText = content;
     this.notification?.show();

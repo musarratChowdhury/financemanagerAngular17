@@ -1,7 +1,7 @@
 <div class="card w-100 bg-primary text-primary-content mx-auto">
   <div class="card-body">
     <h2 class="card-title">Add New Expense</h2>
-    <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()">
+    <form [formGroup]="expenseForm" (ngSubmit)="onReceiptSubmit()">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="col-span-1">
           <ejs-textbox
@@ -63,13 +63,15 @@
       </div>
       <button
         type="button"
+        (click)="onExpenseSubmit()"
         [disabled]="!checkValidity()"
         class="btn btn-sm btn-info mt-4"
       >
         Add
       </button>
       <button
-        type="button"
+        type="submit"
+        [disabled]="!checkReceiptValidity()"
         class="btn btn-sm btn-secondary mt-4 ml-2"
       >
         Submit
@@ -125,11 +127,11 @@
   </e-columns>
 </ejs-grid>
 
-<ejs-toast #notification [position]='position'>
+<ejs-toast #notification [position]="position">
   <ng-template #notification_title>
     <div></div>
   </ng-template>
   <ng-template #notification_content>
     <div></div>
-  </ng-template>
-</ejs-toast>`
+  </ng-template> </ejs-toast
+>`
