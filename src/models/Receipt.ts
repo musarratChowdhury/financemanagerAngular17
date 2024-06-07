@@ -5,12 +5,12 @@ export class Receipt {
    *
    */
   constructor(
-    public Id: string | null,
+    public Id: number,
     public GrandTotal: number,
     public TotalItems: number,
     public ExpenseDate: Date,
-    public EntryDate: Date | null,
-    public CreatedBy: string | null,
+    public EntryDate: Date,
+    public CreatedBy: string,
 
     public Expenses: Expense[]
   ) {}

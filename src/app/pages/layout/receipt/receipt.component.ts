@@ -132,22 +132,17 @@ export class ReceiptComponent implements OnInit {
 
   onReceiptSubmit() {
     if (this.checkReceiptValidity()) {
-      let grandTotal = this.expenseList.reduce((total, expense) => {
-        let cost = expense.Amount * (expense.UnitPrice || 0);
-        if (expense.Quantity !== null) {
-          cost *= expense.Quantity;
-        }
-        return total + cost;
-      }, 0);
+      let grandTotal = 0;
+      this.expenseList.forEach((x) => (grandTotal = grandTotal + x.Amount));
       let TotalItems = this.expenseList.length;
       let expenseDate = this.expenseList[0].ExpenseDate;
       let newReceipt = new Receipt(
-        null,
+        0,
         grandTotal,
         TotalItems,
         expenseDate,
-        null,
-        null,
+        new Date(),
+        this.generateGUID(),
         this.expenseList
       );
 
@@ -174,5 +169,12 @@ export class ReceiptComponent implements OnInit {
     this.notification_title.innerText = title;
     this.notification_content.innerText = content;
     this.notification?.show();
+  }
+  generateGUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
   }
 }
