@@ -1,53 +1,64 @@
-<div class="contain-layout h-screen">
-  <div class="navbar bg-base-100">
-    <a class="btn btn-ghost text-xl">FM</a>
-    <a
-      class="btn btn-sm btn-primary"
-      routerLinkActive="activebutton"
-      routerLink="/dashboard"
-      >Dashboard</a
-    >
-    |
-    <a
-      class="btn btn-sm btn-primary"
-      routerLinkActive="activebutton"
-      routerLink="/expense-category"
-      >Expense-category</a
-    >
-    |
-    <a
-      class="btn btn-sm btn-primary"
-      routerLinkActive="activebutton"
-      routerLink="/expense"
-      >Expense</a
-    >
-    |
-    <a
-      class="btn btn-sm btn-primary"
-      routerLinkActive="activebutton"
-      routerLink="/expense-table"
-      >Expense Table</a
-    >
-    |
-    <a
-      class="btn btn-sm btn-primary"
-      routerLinkActive="activebutton"
-      routerLink="/receipt"
-      >Receipt</a
-    >
-    |
-    <a
-      class="btn btn-sm btn-primary"
-      routerLinkActive="activebutton"
-      routerLink="/"
-      >Home</a
-    >
+<div class="contain-layout h-screen flex flex-col">
+  <!-- Navbar -->
+  <div class="navbar bg-base-100 shadow-lg flex-wrap">
+    <div class="flex-1">
+      <a class="btn btn-ghost normal-case text-xl">FM</a>
+    </div>
+    <div class="flex-none w-full sm:w-auto">
+      <div
+        class="menu menu-horizontal px-1 flex flex-wrap justify-center sm:space-x-2 space-y-2 sm:space-y-0"
+      >
+        <a
+          class="btn btn-sm btn-primary w-full sm:w-auto"
+          routerLinkActive="activebutton"
+          routerLink="/dashboard"
+          >Dashboard</a
+        >
+        <a
+          class="btn btn-sm btn-primary w-full sm:w-auto"
+          routerLinkActive="activebutton"
+          routerLink="/expense-category"
+          >Expense Category</a
+        >
+        <a
+          class="btn btn-sm btn-primary w-full sm:w-auto"
+          routerLinkActive="activebutton"
+          routerLink="/expense"
+          >Expense</a
+        >
+        <a
+          class="btn btn-sm btn-primary w-full sm:w-auto"
+          routerLinkActive="activebutton"
+          routerLink="/expense-table"
+          >Expense Table</a
+        >
+        <a
+          class="btn btn-sm btn-primary w-full sm:w-auto"
+          routerLinkActive="activebutton"
+          routerLink="/receipt"
+          >Receipt</a
+        >
+        <a
+          class="btn btn-sm btn-primary w-full sm:w-auto"
+          routerLinkActive="activebutton"
+          routerLink="/"
+          >Home</a
+        >
+      </div>
+    </div>
   </div>
 
-  <div class="container mx-auto flex justify-center items-center min-h-svh">
+  <!-- Main Content -->
+  <div class="container mx-auto flex-grow flex justify-center items-center">
     <router-outlet></router-outlet>
   </div>
-
+  <a
+    class="btn btn-sm btn-primary w-full sm:w-auto"
+    routerLinkActive="activebutton"
+    routerLink="/dashboard"
+    >Dashboard</a
+  >
+  <!-- Footer -->
   <footer class="footer footer-center p-4 bg-base-300 text-base-content">
     <aside>
       <p>Copyright © 2024 - All right reserved by MushCorps Ltd</p>
