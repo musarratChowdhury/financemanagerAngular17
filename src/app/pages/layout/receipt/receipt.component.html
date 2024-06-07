@@ -1,0 +1,135 @@
+<div class="card w-100 bg-primary text-primary-content mx-auto">
+  <div class="card-body">
+    <h2 class="card-title">Add New Expense</h2>
+    <form [formGroup]="expenseForm" (ngSubmit)="onSubmit()">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="col-span-1">
+          <ejs-textbox
+            placeholder="Expense Title"
+            floatLabelType="Auto"
+            formControlName="expenseName"
+            class="w-full"
+          ></ejs-textbox>
+        </div>
+        <div class="col-span-1">
+          <ejs-numerictextbox
+            placeholder="Expense Amount"
+            floatLabelType="Auto"
+            class="w-full"
+            min="1"
+            format="#"
+            formControlName="expenseAmount"
+          ></ejs-numerictextbox>
+        </div>
+        <div class="col-span-1">
+          <ejs-numerictextbox
+            placeholder="Expense Quantity"
+            floatLabelType="Auto"
+            class="w-full"
+            min="0"
+            format="#"
+            formControlName="expenseQuantity"
+          ></ejs-numerictextbox>
+        </div>
+        <div class="col-span-1">
+          <ejs-numerictextbox
+            placeholder="Expense Unit Price"
+            floatLabelType="Auto"
+            class="w-full"
+            min="0"
+            format="#"
+            formControlName="expenseUnitPrice"
+          ></ejs-numerictextbox>
+        </div>
+        <div class="col-span-1">
+          <ejs-datetimepicker
+            placeholder="Expense Date"
+            floatLabelType="Auto"
+            class="w-full"
+            formControlName="expenseDate"
+          ></ejs-datetimepicker>
+        </div>
+        <div class="col-span-1">
+          <ejs-dropdownlist
+            floatLabelType="Auto"
+            formControlName="expenseCategory"
+            id="games"
+            [dataSource]="expenseCategoryList"
+            [fields]="fields"
+            [placeholder]="waterMark"
+            [popupHeight]="height"
+          ></ejs-dropdownlist>
+        </div>
+      </div>
+      <button
+        type="button"
+        [disabled]="!checkValidity()"
+        class="btn btn-sm btn-info mt-4"
+      >
+        Add
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-secondary mt-4 ml-2"
+      >
+        Submit
+      </button>
+    </form>
+  </div>
+</div>
+
+<ejs-grid
+  #grid
+  [dataSource]="expenseList"
+  [allowPaging]="true"
+  [allowSorting]="true"
+  [pageSettings]="pageSettings"
+>
+  <e-columns>
+    <e-column
+      field="id"
+      headerText="ID"
+      textAlign="Center"
+      [visible]="false"
+    ></e-column>
+    <e-column field="cause" headerText="Cause"></e-column>
+    <e-column
+      field="amount"
+      headerText="Amount"
+      textAlign="Center"
+      format="C2"
+    ></e-column>
+    <e-column
+      field="quantity"
+      headerText="Quantity"
+      textAlign="Center"
+      format="C2"
+    ></e-column>
+    <e-column
+      field="unitPrice"
+      headerText="UnitPrice"
+      textAlign="Center"
+      format="C2"
+    ></e-column>
+    <e-column
+      field="createdBy"
+      headerText="Created By"
+      [visible]="false"
+    ></e-column>
+    <e-column
+      field="expenseDate"
+      headerText="Expense Date"
+      textAlign="center"
+      format="dd/MM/yy"
+    ></e-column>
+  </e-columns>
+</ejs-grid>
+
+<ejs-toast #notification [position]='position'>
+  <ng-template #notification_title>
+    <div></div>
+  </ng-template>
+  <ng-template #notification_content>
+    <div></div>
+  </ng-template>
+</ejs-toast>`
