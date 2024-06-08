@@ -1,0 +1,7 @@
+
+
+# Catch-all redirect for Angular routes
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
