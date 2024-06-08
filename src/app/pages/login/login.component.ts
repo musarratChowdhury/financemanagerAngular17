@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { LoginModel } from '../../../models/loginModel';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
@@ -12,7 +12,7 @@ import { StorageService } from '../../services/storage.service';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginObj: LoginModel;
   isLoggedIn = false;
   isLoginFailed = false;
@@ -24,6 +24,11 @@ export class LoginComponent {
     private router: Router
   ) {
     this.loginObj = new LoginModel();
+  }
+  ngOnInit(): void {
+    if (this.storageService.isLoggedIn()) {
+      this.router.navigate(['/dashboard']);
+    }
   }
 
   onSubmit() {

@@ -8,14 +8,12 @@ import {
 import { DateTimePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
-import {
-  DropDownListComponent,
-  DropDownListModule,
-} from '@syncfusion/ej2-angular-dropdowns';
+import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ExpenseCategory } from '../../../../models/ExpenseCategory';
 import { Expense } from '../../../../models/Expense';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-expense',
@@ -36,7 +34,8 @@ export class ExpenseComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private expenseService: ExpenseService,
-    private expenseCategoryService: ExpenseCategoryService
+    private expenseCategoryService: ExpenseCategoryService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -94,7 +93,10 @@ export class ExpenseComponent implements OnInit {
         expenseCategory
       );
       this.expenseService.create(newExpense).subscribe({
-        next: (data) => console.log(data),
+        next: (data) => {
+          console.log(data);
+          this.router.navigate(['/expense-table']);
+        },
         error: (err) => console.log(err),
       });
     }

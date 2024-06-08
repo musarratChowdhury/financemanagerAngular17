@@ -6,8 +6,9 @@ import { RegisterComponent } from './pages/register/register.component';
 import { DashboardComponent } from './pages/layout/dashboard/dashboard.component';
 import { ExpenseCategoryComponent } from './pages/layout/expense-category/expense-category.component';
 import { ExpenseComponent } from './pages/layout/expense/expense.component';
-import {ExpenseTableComponent} from "./pages/layout/expense/expense-table/expense-table.component";
-import {ReceiptComponent} from "./pages/layout/receipt/receipt.component";
+import { ExpenseTableComponent } from './pages/layout/expense/expense-table/expense-table.component';
+import { ReceiptComponent } from './pages/layout/receipt/receipt.component';
+import { authGuard } from './auth.guard';
 
 export const routes: Routes = [
   {
@@ -29,6 +30,7 @@ export const routes: Routes = [
     path: '',
     component: LayoutComponent,
     title: 'Layout',
+    canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',
@@ -46,15 +48,15 @@ export const routes: Routes = [
         component: ExpenseComponent,
       },
       {
-        path:'expense-table',
-        title:"ExpenseTable",
-        component : ExpenseTableComponent
+        path: 'expense-table',
+        title: 'ExpenseTable',
+        component: ExpenseTableComponent,
       },
       {
         path: 'receipt',
         title: 'Receipt',
         component: ReceiptComponent,
-      }
+      },
     ],
   },
 
