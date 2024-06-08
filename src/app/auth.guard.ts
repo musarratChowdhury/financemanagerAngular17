@@ -12,5 +12,10 @@ export const authGuard: CanActivateFn = (
   next: ActivatedRouteSnapshot,
   state: RouterStateSnapshot
 ) => {
-  return inject(StorageService).isLoggedIn(); // your  logic goes here
+  if (inject(StorageService).isLoggedIn()) {
+    return true;
+  } else {
+    inject(Router).navigate(['/login']);
+    return false;
+  }
 };
