@@ -32,6 +32,7 @@
     "@syncfusion/ej2-angular-grids": "^25.2.7",
     "@syncfusion/ej2-angular-inputs": "^25.2.6",
     "@syncfusion/ej2-angular-notifications": "^25.2.3",
+    "@syncfusion/ej2-angular-popups": "^25.2.7",
     "@types/jasmine": "~5.1.0",
     "autoprefixer": "^10.4.19",
     "daisyui": "^4.11.1",
