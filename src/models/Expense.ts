@@ -1,10 +1,10 @@
 export class Expense {
   constructor(
-    private Cause: string,
-    private Amount: number,
-    private Quantity: number | null,
-    private UnitPrice: number | null,
-    private ExpenseDate: Date,
-    private ExpenseCategoryId: number
+    public Cause: string,
+    public Amount: number,
+    public Quantity: number | null,
+    public UnitPrice: number | null,
+    public ExpenseDate: Date,
+    public ExpenseCategoryId: number
   ) {}
 }
