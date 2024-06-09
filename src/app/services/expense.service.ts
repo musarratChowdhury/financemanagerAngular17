@@ -3,8 +3,10 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Expense } from '../../models/Expense';
+import { environment } from '../../environments/environment.development';
 
-const API_URL = 'https://financemanager.duckdns.org/api/Expense/';
+const API_URL = `${environment.apiUrl}/api/Expense/`;
+
 const httpOptions = {
   headers: new HttpHeaders({
     'Content-Type': 'application/json',
