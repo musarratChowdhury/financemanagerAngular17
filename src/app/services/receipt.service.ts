@@ -3,7 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { Receipt } from '../../models/Receipt';
-import { environment } from '../../environments/environment.development';
+import { environment } from '../../environments/environment';
 
 const API_URL = `${environment.apiUrl}/api/Receipt/`;
 
