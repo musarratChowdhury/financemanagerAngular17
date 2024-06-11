@@ -9,6 +9,7 @@ import { ExpenseComponent } from './pages/layout/expense/expense.component';
 import { ExpenseTableComponent } from './pages/layout/expense/expense-table/expense-table.component';
 import { ReceiptComponent } from './pages/layout/receipt/receipt.component';
 import { authGuard } from './auth.guard';
+import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
 
 export const routes: Routes = [
   {
@@ -20,6 +21,11 @@ export const routes: Routes = [
     path: 'login',
     title: 'Login Page',
     component: LoginComponent,
+  },
+  {
+    path: 'navbar',
+    title: 'navbar',
+    component: NavbarComponent,
   },
   {
     path: 'register',
