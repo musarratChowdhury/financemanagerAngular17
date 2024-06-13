@@ -54,13 +54,16 @@ export class ReceiptComponent implements OnInit {
   @ViewChild('notification_content') public notification_content: any;
   @ViewChild('grid')
   public grid?: GridComponent;
+  public totalAmount: number;
 
   constructor(
     private formBuilder: FormBuilder,
     private expenseCategoryService: ExpenseCategoryService,
     private receiptService: ReceiptService,
     private router: Router
-  ) {}
+  ) {
+    this.totalAmount = 0;
+  }
 
   ngOnInit(): void {
     this.pageSettings = { pageSize: 10 };
@@ -125,6 +128,7 @@ export class ReceiptComponent implements OnInit {
       // console.log(this.grid)
 
       this.expenseList.push(newExpense);
+      this.totalAmount += newExpense.Amount;
 
       if (this.grid) {
         this.grid.refresh();
