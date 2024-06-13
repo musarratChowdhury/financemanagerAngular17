@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import {
   GridModule,
@@ -25,7 +24,7 @@ export class ExpenseTableComponent implements OnInit {
 
   constructor(private dataService: ExpenseService) {}
   ngOnInit(): void {
-    this.pageSettings = { pageSize: 6 };
+    this.pageSettings = { pageSize: 10 };
     this.dataService.getAll().subscribe({
       next: (data: Expense[]) => {
         this.data = data;

@@ -36,6 +36,7 @@
     "@syncfusion/ej2-angular-notifications": "^25.2.3",
     "@syncfusion/ej2-angular-popups": "^25.2.7",
     "@syncfusion/ej2-angular-splitbuttons": "^25.2.4",
+    "@syncfusion/ej2-data": "^26.1.35",
     "@types/jasmine": "~5.1.0",
     "autoprefixer": "^10.4.19",
     "daisyui": "^4.11.1",

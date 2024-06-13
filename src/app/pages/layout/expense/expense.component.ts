@@ -31,6 +31,7 @@ import { Router } from '@angular/router';
 })
 export class ExpenseComponent implements OnInit {
   public expenseCategoryList: ExpenseCategory[] = [];
+  // public formatOption:Object;
   constructor(
     private formBuilder: FormBuilder,
     private expenseService: ExpenseService,
