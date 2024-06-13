@@ -27,7 +27,7 @@ export class NavbarComponent {
         },
         {
           text: 'Expense Form',
-          routerLink: '/expense-form',
+          routerLink: '/expense',
         },
       ],
     },

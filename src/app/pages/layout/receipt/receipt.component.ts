@@ -26,6 +26,7 @@ import {
 import { DateTimePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { Receipt } from '../../../../models/Receipt';
 import { ReceiptService } from '../../../services/receipt.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-receipt',
@@ -57,7 +58,8 @@ export class ReceiptComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private expenseCategoryService: ExpenseCategoryService,
-    private receiptService: ReceiptService
+    private receiptService: ReceiptService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -147,7 +149,10 @@ export class ReceiptComponent implements OnInit {
       );
 
       this.receiptService.create(newReceipt).subscribe({
-        next: (data) => console.log(data),
+        next: (data) => {
+          this.router.navigate(['/expense-table']);
+          console.log(data);
+        },
         error: (err) => console.error(err),
       });
     }
