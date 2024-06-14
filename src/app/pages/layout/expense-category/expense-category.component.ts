@@ -64,12 +64,12 @@ export class ExpenseCategoryComponent implements OnInit {
         //batchUrl:'https://localhost:44380/api/grid/BatchUpdate', // perform CRUD action using batchURL when enabling batch editing
         adaptor: new WebApiAdaptor(),
       });
-      console.log(this.data);
-      console.log(this.grid?.dataSource);
+      // console.log(this.data);
+      // console.log(this.grid?.dataSource);
       this.grid?.addEventListener('add', () => {
         console.log('hello');
       });
-      console.log(this.grid);
+      // console.log(this.grid);
     }, 1000);
 
     this.dataService.getAll().subscribe({
@@ -98,7 +98,10 @@ export class ExpenseCategoryComponent implements OnInit {
         ''
       );
       this.dataService.create(newCategory).subscribe({
-        next: (res) => console.log(res),
+        next: (res) => {
+          this.grid?.refresh();
+          // console.log(res);
+        },
         error: (err) => console.log(err),
       });
     } else if (event.action == 'edit' && event.requestType == 'save') {
@@ -110,9 +113,14 @@ export class ExpenseCategoryComponent implements OnInit {
         event.data.createdBy
       );
       this.dataService.update(event.data.id, editedCategory).subscribe({
-        next: (res) => console.log(res),
+        next: (res) => {
+          this.grid?.refresh();
+          // console.log(res);
+        },
         error: (err) => console.log(err),
       });
+    } else if (event.requestType == 'delete') {
+      console.log('Delete triggered');
     }
   }
 
