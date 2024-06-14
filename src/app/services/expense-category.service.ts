@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
-const API_URL = `${environment.apiUrl}/api/ExpenseCategory/`;
+const API_URL = `${environment.apiUrl}/api/ExpenseCategory`;
 
 const httpOptions = {
   headers: new HttpHeaders({

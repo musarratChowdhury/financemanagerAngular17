@@ -1,12 +1,16 @@
 <ejs-grid
   #grid
   id="grid"
-  [dataSource]="data"
+  [dataSource]=""
   [allowPaging]="true"
   [allowSorting]="true"
   [editSettings]="editSettings"
   [pageSettings]="pageSettings"
   [toolbar]="toolbar"
+  (dataSourceChanged)="dataSourceChanged($event)"
+  (dataStateChange)="dataStateChange($event)"
+  (actionBegin)="actionBeginHandler($event)"
+  (actionComplete)="actionCompleteHandler($event)"
 >
   <e-columns>
     <e-column
