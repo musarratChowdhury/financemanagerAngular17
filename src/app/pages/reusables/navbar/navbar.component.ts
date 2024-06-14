@@ -43,5 +43,11 @@ export class NavbarComponent {
       submenu: false,
       routerLink: '/receipt',
     },
+    {
+      serial: 5,
+      text: 'Current Needs',
+      submenu: false,
+      routerLink: '/current-needs',
+    },
   ];
 }

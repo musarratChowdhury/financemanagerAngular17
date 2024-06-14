@@ -10,6 +10,7 @@ import { ExpenseTableComponent } from './pages/layout/expense/expense-table/expe
 import { ReceiptComponent } from './pages/layout/receipt/receipt.component';
 import { authGuard } from './auth.guard';
 import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
+import { CurrentNeedsComponent } from './pages/layout/current-needs/current-needs.component';
 
 export const routes: Routes = [
   {
@@ -62,6 +63,11 @@ export const routes: Routes = [
         path: 'receipt',
         title: 'Receipt',
         component: ReceiptComponent,
+      },
+      {
+        path: 'current-needs',
+        title: 'CurrentNeeds',
+        component: CurrentNeedsComponent,
       },
     ],
   },
