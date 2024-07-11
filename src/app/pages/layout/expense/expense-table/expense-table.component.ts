@@ -28,7 +28,7 @@ export class ExpenseTableComponent implements OnInit {
     this.dataService.getAll().subscribe({
       next: (data: Expense[]) => {
         this.data = data;
-        console.log(data);
+        // console.log(data);
       },
       error: (err) => {
         console.log(err.message);

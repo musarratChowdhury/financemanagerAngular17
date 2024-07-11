@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import {
+  AccumulationChartComponent,
   AccumulationChartModule,
   AreaSeriesService,
   BarSeriesService,
@@ -67,6 +68,7 @@ interface PieData {
   ],
 })
 export class DashboardComponent implements OnInit {
+  @ViewChild('piechart') piechart: AccumulationChartComponent | undefined;
   public piedata?: PieData[];
   public legendSettings?: Object;
   public tooltip?: Object;
@@ -88,17 +90,7 @@ export class DashboardComponent implements OnInit {
     var x = this.dashboardService.get().subscribe({
       next: (data: any[]) => {
         console.log(data);
-        this.piedata = data.map((category) => ({
-          x: category.categoryName,
-          y: category.totalAmount,
-          text: `${category.categoryName}: ${category.totalAmount}`,
-        }));
-        this.TotalCostOccuredThisMonth = this.piedata.reduce(
-          (sum, item: any) => sum + item.y,
-          0
-        );
-        this.title = `Total Cost Occurred This Month: ${this.TotalCostOccuredThisMonth}`;
-        console.log(this.TotalCostOccuredThisMonth);
+        this.updatePieChartData(data);
       },
       error: (err) => console.log(err),
     });
@@ -131,5 +123,40 @@ export class DashboardComponent implements OnInit {
       enable: true,
     };
     this.title = `Total Cost Occured This month : ${this.TotalCostOccuredThisMonth}`;
+  }
+
+  onMonthChange(event: Event): void {
+    const selectedMonth = (event.target as HTMLSelectElement).value;
+    console.log('Selected Month:', selectedMonth);
+
+    const monthNo = parseInt(selectedMonth, 10);
+
+    if (!isNaN(monthNo)) {
+      this.dashboardService.getExpensesOfAMonth(monthNo).subscribe({
+        next: (data) => {
+          console.log('Monthly data:', data);
+          this.updatePieChartData(data);
+        },
+        error: (err) => console.error('Error fetching data:', err),
+      });
+    } else {
+      console.error('Invalid month number');
+    }
+  }
+
+  updatePieChartData(data: any[]): void {
+    this.tooltip = new Object();
+    this.piedata = data.map((category) => ({
+      x: category.categoryName,
+      y: category.totalAmount,
+      text: `${category.categoryName}: ${category.totalAmount}`,
+    }));
+    this.TotalCostOccuredThisMonth = this.piedata.reduce(
+      (sum, item: any) => sum + item.y,
+      0
+    );
+    this.title = `Total Cost Occurred This Month: ${this.TotalCostOccuredThisMonth}`;
+    this.piechart?.refresh();
+    this.piechart?.refreshChart();
   }
 }
