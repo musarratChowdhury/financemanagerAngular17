@@ -16,10 +16,15 @@ const httpOptions = {
 export class DashboardService {
   constructor(private http: HttpClient) {}
 
-  // Read an item by ID
   get(): Observable<any> {
     return this.http
       .get(`${API_URL}GetExpensesOfThisMonth`, httpOptions)
+      .pipe(catchError(this.handleError));
+  }
+
+  getBarChartData(): Observable<any> {
+    return this.http
+      .get(`${API_URL}GetBarChartData`, httpOptions)
       .pipe(catchError(this.handleError));
   }
 

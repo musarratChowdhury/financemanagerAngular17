@@ -28,6 +28,7 @@ import {
   AccumulationDataLabelService,
 } from '@syncfusion/ej2-angular-charts';
 import { DashboardService } from '../../../services/dashboard.service';
+import { MonthlyExpense } from '../../../../models/BarChartData';
 interface PieData {
   x: string;
   y: number;
@@ -102,32 +103,26 @@ export class DashboardComponent implements OnInit {
       error: (err) => console.log(err),
     });
 
-    // this.piedata = [
-    //   { x: 'Jan', y: 3, text: 'Jan: 3' },
-    //   { x: 'Feb', y: 3.5, text: 'Feb: 3.5' },
-    //   { x: 'Mar', y: 7, text: 'Mar: 7' },
-    //   { x: 'Apr', y: 13.5, text: 'Apr: 13.5' },
-    //   { x: 'May', y: 19, text: 'May: 19' },
-    //   { x: 'Jun', y: 23.5, text: 'Jun: 23.5' },
-    //   { x: 'Jul', y: 26, text: 'Jul: 26' },
-    //   { x: 'Aug', y: 25, text: 'Aug: 25' },
-    //   { x: 'Sep', y: 21, text: 'Sep: 21' },
-    //   { x: 'Oct', y: 15, text: 'Oct: 15' },
-    //   { x: 'Nov', y: 9, text: 'Nov: 9' },
-    //   { x: 'Dec', y: 3.5, text: 'Dec: 3.5' },
-    // ];
+    var y = this.dashboardService.getBarChartData().subscribe({
+      next: (data: MonthlyExpense[]) => {
+        console.log('barchartdata', data);
+        this.barChartTitle = `${
+          isNaN(data[0].year) ? data[0].year : new Date().getFullYear()
+        }`;
+        this.barChartData = data.map((m) => ({
+          x: m.monthName,
+          y: m.totalExpense,
+          text: m.monthName,
+        }));
+        console.log(this.barChartData);
+      },
+      error: (err) => console.log(err),
+    });
+
     this.primaryXAxis = {
       valueType: 'Category',
       title: 'Months',
     };
-    this.barChartData = [
-      { x: 'A', y: 100 },
-      { x: 'B', y: 300 },
-      { x: 'C', y: 900 },
-      { x: 'D', y: 200 },
-      { x: 'E', y: 100 },
-      { x: 'F', y: 600 },
-    ];
     this.datalabel = { visible: true };
     this.legendSettings = {
       visible: true,
