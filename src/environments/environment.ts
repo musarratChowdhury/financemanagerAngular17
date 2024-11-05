@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://financemanager.duckdns.org',
+  apiUrl: 'http://fmapi-tw9v.onrender.com',
 };
