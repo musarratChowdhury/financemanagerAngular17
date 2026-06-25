@@ -26,7 +26,7 @@
     "@angular-devkit/build-angular": "~20.3.0",
     "@angular/cli": "~20.3.0",
     "@angular/compiler-cli": "~20.3.0",
-    "@syncfusion/ej2-angular-buttons": "^25.2.7",
+    "@syncfusion/ej2-angular-buttons": "^33.2.15",
     "@syncfusion/ej2-angular-calendars": "^25.2.5",
     "@syncfusion/ej2-angular-charts": "^25.2.6",
     "@syncfusion/ej2-angular-dropdowns": "^25.2.6",
