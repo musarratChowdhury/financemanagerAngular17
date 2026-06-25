@@ -125,6 +125,17 @@
       format="dd/MM/yy"
       [visible]="false"
     ></e-column>
+    <e-column headerText="Actions" [width]="100" textAlign="Center">
+      <ng-template #template let-data>
+        <button
+          type="button"
+          class="btn btn-xs btn-error"
+          (click)="onDeleteExpense(data)"
+        >
+          Delete
+        </button>
+      </ng-template>
+    </e-column>
   </e-columns>
 </ejs-grid>
 <div class="p-1 text-black text-center text-xl bg-orange-500">

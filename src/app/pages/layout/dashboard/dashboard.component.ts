@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   AccumulationChartComponent,
   AccumulationChartModule,
@@ -38,7 +39,7 @@ interface PieData {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [ChartModule, AccumulationChartModule],
+  imports: [ChartModule, AccumulationChartModule, CommonModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
   providers: [
@@ -79,6 +80,9 @@ export class DashboardComponent implements OnInit {
   primaryXAxis: any;
   primaryYAxis: any;
   TotalCostOccuredThisMonth: number = 0;
+  selectedMonth: number | null = null;
+  selectedYear: number = new Date().getFullYear();
+  years: number[] = [];
 
   constructor(private dashboardService: DashboardService) {}
 
@@ -87,6 +91,11 @@ export class DashboardComponent implements OnInit {
     args['text'] = args.point.x + ' : ' + Math.ceil(value) + '' + '%';
   }
   ngOnInit(): void {
+    const currentYear = new Date().getFullYear();
+    for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+      this.years.push(y);
+    }
+
     var x = this.dashboardService.get().subscribe({
       next: (data: any[]) => {
         console.log(data);
@@ -132,16 +141,30 @@ export class DashboardComponent implements OnInit {
     const monthNo = parseInt(selectedMonth, 10);
 
     if (!isNaN(monthNo)) {
-      this.dashboardService.getExpensesOfAMonth(monthNo).subscribe({
-        next: (data) => {
-          console.log('Monthly data:', data);
-          this.updatePieChartData(data);
-        },
-        error: (err) => console.error('Error fetching data:', err),
-      });
+      this.selectedMonth = monthNo;
+      this.fetchMonthlyExpenses();
     } else {
       console.error('Invalid month number');
     }
+  }
+
+  onYearChange(event: Event): void {
+    const year = parseInt((event.target as HTMLSelectElement).value, 10);
+    if (!isNaN(year)) {
+      this.selectedYear = year;
+      this.fetchMonthlyExpenses();
+    }
+  }
+
+  private fetchMonthlyExpenses(): void {
+    const month = this.selectedMonth ?? new Date().getMonth() + 1;
+    this.dashboardService.getExpensesOfAMonth(month, this.selectedYear).subscribe({
+      next: (data) => {
+        console.log('Monthly data:', data);
+        this.updatePieChartData(data);
+      },
+      error: (err) => console.error('Error fetching data:', err),
+    });
   }
 
   updatePieChartData(data: any[]): void {

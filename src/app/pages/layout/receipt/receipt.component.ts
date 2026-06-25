@@ -166,6 +166,15 @@ export class ReceiptComponent implements OnInit {
     console.log(this.notification);
   }
 
+  onDeleteExpense(expense: Expense): void {
+    const index = this.expenseList.indexOf(expense);
+    if (index > -1) {
+      this.totalAmount -= expense.Amount;
+      this.expenseList.splice(index, 1);
+      this.grid?.refresh();
+    }
+  }
+
   checkValidity() {
     return this.expenseForm.status == 'VALID' ? true : false;
   }

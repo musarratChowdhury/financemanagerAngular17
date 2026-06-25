@@ -22,8 +22,10 @@ export class DashboardService {
       .pipe(catchError(this.handleError));
   }
 
-  getExpensesOfAMonth(monthNo: number): Observable<any> {
-    const params = new HttpParams().set('month', monthNo.toString());
+  getExpensesOfAMonth(monthNo: number, year: number): Observable<any> {
+    const params = new HttpParams()
+      .set('month', monthNo.toString())
+      .set('year', year.toString());
 
     return this.http
       .get(`${API_URL}GetExpensesOfAMonth`, { ...httpOptions, params })
