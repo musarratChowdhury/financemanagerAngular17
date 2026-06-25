@@ -1,0 +1,53 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+    groups:
+      angular-security:
+        applies-to: security-updates
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+      dev-server-security:
+        applies-to: security-updates
+        patterns:
+          - "webpack"
+          - "webpack-dev-server"
+          - "vite"
+          - "esbuild"
+          - "http-proxy-middleware"
+    ignore:
+      - dependency-name: "@angular/core"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/common"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/forms"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/router"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/animations"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/compiler"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/compiler-cli"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/platform-browser"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/platform-browser-dynamic"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular-devkit/build-angular"
+        versions: ["21.x", "22.x"]
+      - dependency-name: "@angular/cli"
+        versions: ["21.x", "22.x"]
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
