@@ -1,9 +1,13 @@
 <div class="navbar bg-base-100">
   <div class="navbar-start">
-    <div class="dropdown">
-      <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+    <div class="dropdown" #mobileDropdown [class.dropdown-open]="isMobileMenuOpen">
+      <div
+        role="button"
+        class="btn btn-ghost lg:hidden"
+        (click)="toggleMobileMenu($event)"
+      >
         <svg
-          xmlns="http://www.w3.org/2010/svg"
+          xmlns="http://www.w3.org/2000/svg"
           class="h-5 w-5"
           fill="none"
           viewBox="0 0 24 24"
@@ -18,12 +22,11 @@
         </svg>
       </div>
       <ul
-        tabindex="0"
         class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
       >
         @for(route of routeList; track route.serial){ @if(route.submenu){
         <li>
-          <details>
+          <details #submenuDetails>
             <summary>{{ route.text }}</summary>
             <ul class="p-2">
               @for (subroute of route.submenuList; track subroute.serial) {
@@ -49,7 +52,7 @@
     <ul class="menu menu-horizontal z-[3] px-1">
       @for(route of routeList; track route.serial){ @if(route.submenu){
       <li>
-        <details>
+        <details #submenuDetails>
           <summary>{{ route.text }}</summary>
           <ul class="p-2">
             @for (subroute of route.submenuList; track subroute.serial) {
@@ -68,14 +71,21 @@
     </ul>
   </div>
   <div class="navbar-end">
-    <div class="dropdown dropdown-end">
-      <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar">
+    <div
+      class="dropdown dropdown-end"
+      #avatarDropdown
+      [class.dropdown-open]="isAvatarMenuOpen"
+    >
+      <div
+        role="button"
+        class="btn btn-ghost btn-circle avatar"
+        (click)="toggleAvatarMenu($event)"
+      >
         <div class="w-10 rounded-full">
           <img alt="Tailwind CSS Navbar component" src="images/parrot.jpg" />
         </div>
       </div>
       <ul
-        tabindex="0"
         class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
       >
         <li>
