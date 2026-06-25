@@ -33,7 +33,7 @@
     "@syncfusion/ej2-angular-grids": "^25.2.7",
     "@syncfusion/ej2-angular-inputs": "^25.2.6",
     "@syncfusion/ej2-angular-navigations": "^25.2.6",
-    "@syncfusion/ej2-angular-notifications": "^25.2.3",
+    "@syncfusion/ej2-angular-notifications": "^33.2.7",
     "@syncfusion/ej2-angular-popups": "^25.2.7",
     "@syncfusion/ej2-angular-splitbuttons": "^25.2.4",
     "@syncfusion/ej2-data": "^26.1.35",
