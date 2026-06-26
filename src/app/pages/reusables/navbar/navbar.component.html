@@ -29,7 +29,7 @@
           <details #submenuDetails>
             <summary>{{ route.text }}</summary>
             <ul class="p-2">
-              @for (subroute of route.submenuList; track subroute.serial) {
+              @for (subroute of route.submenuList; track subroute.routerLink) {
               <li>
                 <a routerLink="{{ subroute.routerLink }}">
                   {{ subroute.text }}</a
@@ -55,7 +55,7 @@
         <details #submenuDetails>
           <summary>{{ route.text }}</summary>
           <ul class="p-2">
-            @for (subroute of route.submenuList; track subroute.serial) {
+            @for (subroute of route.submenuList; track subroute.routerLink) {
             <li>
               <a routerLink="{{ subroute.routerLink }}"> {{ subroute.text }}</a>
             </li>

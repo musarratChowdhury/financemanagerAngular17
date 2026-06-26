@@ -13,7 +13,9 @@ import { Expense } from '../../../../models/Expense';
 import {
   GridComponent,
   GridModule,
+  PageService,
   PageSettingsModel,
+  SortService,
 } from '@syncfusion/ej2-angular-grids';
 import {
   ToastComponent,
@@ -43,6 +45,7 @@ import { Router } from '@angular/router';
   ],
   templateUrl: './receipt.component.html',
   styleUrl: './receipt.component.css',
+  providers: [PageService, SortService],
 })
 export class ReceiptComponent implements OnInit {
   public expenseCategoryList: ExpenseCategory[] = [];
@@ -127,11 +130,11 @@ export class ReceiptComponent implements OnInit {
 
       // console.log(this.grid)
 
-      this.expenseList.push(newExpense);
+      this.expenseList = [...this.expenseList, newExpense];
       this.totalAmount += newExpense.Amount;
 
       if (this.grid) {
-        this.grid.refresh();
+        this.grid.dataSource = this.expenseList;
       }
     }
   }
@@ -166,12 +169,17 @@ export class ReceiptComponent implements OnInit {
     console.log(this.notification);
   }
 
-  onDeleteExpense(expense: Expense): void {
-    const index = this.expenseList.indexOf(expense);
-    if (index > -1) {
-      this.totalAmount -= expense.Amount;
-      this.expenseList.splice(index, 1);
-      this.grid?.refresh();
+  onDeleteExpense(expense: Expense, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    console.log('delete clicked', expense);
+
+    this.totalAmount -= expense.Amount;
+    this.expenseList = this.expenseList.filter((e) => e.id !== expense.id);
+
+    if (this.grid) {
+      this.grid.dataSource = this.expenseList;
+      this.grid.refresh();
     }
   }
 

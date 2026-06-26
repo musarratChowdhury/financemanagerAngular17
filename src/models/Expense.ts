@@ -1,4 +1,7 @@
 export class Expense {
+  private static nextId = 1;
+  public id: number;
+
   constructor(
     public Cause: string,
     public Amount: number,
@@ -6,5 +9,7 @@ export class Expense {
     public UnitPrice: number | null,
     public ExpenseDate: Date,
     public ExpenseCategoryId: number
-  ) {}
+  ) {
+    this.id = Expense.nextId++;
+  }
 }
