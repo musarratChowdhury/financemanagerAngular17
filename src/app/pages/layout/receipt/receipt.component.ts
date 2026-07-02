@@ -175,7 +175,9 @@ export class ReceiptComponent implements OnInit {
     console.log('delete clicked', expense);
 
     this.totalAmount -= expense.Amount;
-    this.expenseList = this.expenseList.filter((e) => e.id !== expense.id);
+    this.expenseList = this.expenseList.filter(
+      (e) => e.clientId !== expense.clientId
+    );
 
     if (this.grid) {
       this.grid.dataSource = this.expenseList;

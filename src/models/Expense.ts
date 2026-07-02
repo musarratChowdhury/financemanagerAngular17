@@ -1,6 +1,6 @@
 export class Expense {
-  private static nextId = 1;
   public id: number;
+  public clientId: string;
 
   constructor(
     public Cause: string,
@@ -10,6 +10,7 @@ export class Expense {
     public ExpenseDate: Date,
     public ExpenseCategoryId: number
   ) {
-    this.id = Expense.nextId++;
+    this.id = 0;
+    this.clientId = crypto.randomUUID();
   }
 }
