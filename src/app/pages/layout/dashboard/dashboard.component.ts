@@ -81,7 +81,7 @@ export class DashboardComponent implements OnInit {
   primaryYAxis: any;
   TotalCostOccuredThisMonth: number = 0;
   selectedMonth: number | null = null;
-  selectedYear: number = new Date().getFullYear();
+  selectedYear: number | null = null;
   years: number[] = [];
 
   constructor(private dashboardService: DashboardService) {}
@@ -92,7 +92,7 @@ export class DashboardComponent implements OnInit {
   }
   ngOnInit(): void {
     const currentYear = new Date().getFullYear();
-    for (let y = currentYear - 5; y <= currentYear + 1; y++) {
+    for (let y = currentYear - 5; y <= currentYear; y++) {
       this.years.push(y);
     }
 
@@ -149,16 +149,20 @@ export class DashboardComponent implements OnInit {
   }
 
   onYearChange(event: Event): void {
-    const year = parseInt((event.target as HTMLSelectElement).value, 10);
+    const value = (event.target as HTMLSelectElement).value;
+    const year = parseInt(value, 10);
     if (!isNaN(year)) {
       this.selectedYear = year;
-      this.fetchMonthlyExpenses();
+    } else {
+      this.selectedYear = null;
     }
+    this.fetchMonthlyExpenses();
   }
 
   private fetchMonthlyExpenses(): void {
     const month = this.selectedMonth ?? new Date().getMonth() + 1;
-    this.dashboardService.getExpensesOfAMonth(month, this.selectedYear).subscribe({
+    const year = this.selectedYear ?? new Date().getFullYear();
+    this.dashboardService.getExpensesOfAMonth(month, year).subscribe({
       next: (data) => {
         console.log('Monthly data:', data);
         this.updatePieChartData(data);

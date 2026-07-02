@@ -19,8 +19,9 @@
       <select
         class="select select-secondary"
         (change)="onYearChange($event)"
-        [value]="selectedYear"
+        [value]="selectedYear ?? ''"
       >
+        <option disabled selected value="">Select year</option>
         <option *ngFor="let y of years" [value]="y">{{ y }}</option>
       </select>
     </div>
