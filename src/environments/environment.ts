@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: process.env['API_URL'] || 'https://fmapi.muhit.dev',
+  apiUrl: 'https://fmapi.muhit.dev',
 };
