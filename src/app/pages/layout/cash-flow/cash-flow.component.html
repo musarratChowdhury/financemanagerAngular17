@@ -1,0 +1,98 @@
+<div class="cash-flow-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Money movement</p>
+      <h1>Cash flow</h1>
+      <p class="subtitle">See where your monthly income goes at a glance.</p>
+    </div>
+    <div class="period-controls">
+      <label>
+        <span>Month</span>
+        <select [(ngModel)]="selectedMonth" (change)="loadMonth()">
+          <option [ngValue]="1">January</option>
+          <option [ngValue]="2">February</option>
+          <option [ngValue]="3">March</option>
+          <option [ngValue]="4">April</option>
+          <option [ngValue]="5">May</option>
+          <option [ngValue]="6">June</option>
+          <option [ngValue]="7">July</option>
+          <option [ngValue]="8">August</option>
+          <option [ngValue]="9">September</option>
+          <option [ngValue]="10">October</option>
+          <option [ngValue]="11">November</option>
+          <option [ngValue]="12">December</option>
+        </select>
+      </label>
+      <label>
+        <span>Year</span>
+        <select [(ngModel)]="selectedYear" (change)="loadMonth()">
+          <option *ngFor="let year of years" [ngValue]="year">{{ year }}</option>
+        </select>
+      </label>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
+  <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
+
+  <section class="summary-grid">
+    <article class="summary-card income-card">
+      <span>Income</span>
+      <strong>{{ monthlyIncome | number: '1.2-2' }}</strong>
+    </article>
+    <article class="summary-card expense-card">
+      <span>Expenses</span>
+      <strong>{{ monthlyExpenses | number: '1.2-2' }}</strong>
+    </article>
+    <article class="summary-card" [class.negative-card]="remainingBalance < 0">
+      <span>{{ remainingBalance < 0 ? 'Over budget' : 'Remaining' }}</span>
+      <strong>{{ remainingBalance | number: '1.2-2' }}</strong>
+    </article>
+  </section>
+
+  <section class="content-grid">
+    <article class="chart-card">
+      <div class="card-heading">
+        <div>
+          <p class="eyebrow">Selected period</p>
+          <h2>{{ monthLabel }}</h2>
+        </div>
+        <span *ngIf="loading" class="loading-label">Loading...</span>
+      </div>
+      <app-sankey [income]="monthlyIncome" [expenses]="expenses"></app-sankey>
+    </article>
+
+    <article class="income-card-panel">
+      <p class="eyebrow">Add income</p>
+      <h2>Update this month</h2>
+      <p class="panel-copy">Add another income entry for {{ monthLabel }}.</p>
+      <form (ngSubmit)="saveIncome()">
+        <label>
+          <span>Amount</span>
+          <input
+            type="number"
+            name="incomeAmount"
+            min="0.01"
+            step="0.01"
+            required
+            [(ngModel)]="incomeAmount"
+            placeholder="0.00"
+          />
+        </label>
+        <label>
+          <span>Note <small>(optional)</small></span>
+          <input
+            type="text"
+            name="incomeNote"
+            maxlength="100"
+            [(ngModel)]="incomeNote"
+            placeholder="Salary, freelance, etc."
+          />
+        </label>
+        <button type="submit" [disabled]="saving">
+          {{ saving ? 'Saving...' : 'Add income' }}
+        </button>
+      </form>
+    </article>
+  </section>
+</div>

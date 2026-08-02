@@ -11,6 +11,7 @@ import { ReceiptComponent } from './pages/layout/receipt/receipt.component';
 import { authGuard } from './auth.guard';
 import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
 import { CurrentNeedsComponent } from './pages/layout/current-needs/current-needs.component';
+import { CashFlowComponent } from './pages/layout/cash-flow/cash-flow.component';
 
 export const routes: Routes = [
   {
@@ -68,6 +69,11 @@ export const routes: Routes = [
         path: 'current-needs',
         title: 'CurrentNeeds',
         component: CurrentNeedsComponent,
+      },
+      {
+        path: 'cash-flow',
+        title: 'Cash Flow',
+        component: CashFlowComponent,
       },
     ],
   },

@@ -1,0 +1,41 @@
+:host {
+  display: block;
+}
+
+.sankey-frame {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.sankey-chart {
+  display: block;
+  min-width: 680px;
+  width: 100%;
+  height: auto;
+  min-height: 320px;
+}
+
+:host ::ng-deep .flow-link {
+  fill: none;
+  opacity: 0.58;
+  transition: opacity 160ms ease;
+}
+
+:host ::ng-deep .flow-link:hover {
+  opacity: 0.95;
+}
+
+:host ::ng-deep .flow-node {
+  rx: 4px;
+}
+
+:host ::ng-deep .node-label,
+:host ::ng-deep .empty-chart {
+  fill: #334155;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+}
+
+:host ::ng-deep .empty-chart {
+  text-anchor: middle;
+}

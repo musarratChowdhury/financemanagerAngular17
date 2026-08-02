@@ -68,6 +68,12 @@ export class NavbarComponent {
       submenu: false,
       routerLink: '/current-needs',
     },
+    {
+      serial: 6,
+      text: 'Cash Flow',
+      submenu: false,
+      routerLink: '/cash-flow',
+    },
   ];
 
   constructor(private router: Router) {
