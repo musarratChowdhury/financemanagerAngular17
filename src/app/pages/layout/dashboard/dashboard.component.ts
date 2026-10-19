@@ -13,6 +13,8 @@ import {
   TooltipService,
 } from '@syncfusion/ej2-angular-charts';
 import { BudgetService } from '../../../services/budget.service';
+import { EnvelopeBudgetService } from '../../../services/envelope-budget.service';
+import { EnvelopeBudget } from '../../../../models/EnvelopeBudget';
 import { MonthSnapshot, MonthlyExpense, SavingsInsight } from '../../../../models/Budget';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import {
@@ -74,6 +76,7 @@ export class DashboardComponent implements OnInit {
   readonly insights = signal<SavingsInsight[]>([]);
   readonly loading = signal(true);
   readonly failed = signal(false);
+  readonly envelopeBudgets = signal<EnvelopeBudget[]>([]);
 
   readonly greeting = greeting();
   readonly money = money;
@@ -145,7 +148,10 @@ export class DashboardComponent implements OnInit {
     }));
   });
 
-  constructor(private budgetService: BudgetService) {
+  constructor(
+    private budgetService: BudgetService,
+    private envelopeService: EnvelopeBudgetService
+  ) {
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y >= currentYear - 5; y--) {
       this.years.push(y);
@@ -159,6 +165,7 @@ export class DashboardComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.failed.set(false);
+    this.loadEnvelopes();
     this.budgetService
       .loadMonth(this.selectedMonth(), this.selectedYear())
       .subscribe({
@@ -172,6 +179,16 @@ export class DashboardComponent implements OnInit {
           this.loading.set(false);
         },
       });
+  }
+
+  private loadEnvelopes(): void {
+    this.envelopeService.load(this.selectedMonth(), this.selectedYear()).subscribe({
+      next: (budgets) =>
+        this.envelopeBudgets.set(
+          budgets.filter((budget) => budget.limitAmount > 0).slice(0, 3)
+        ),
+      error: () => this.envelopeBudgets.set([]),
+    });
   }
 
   onMonthChange(value: string): void {

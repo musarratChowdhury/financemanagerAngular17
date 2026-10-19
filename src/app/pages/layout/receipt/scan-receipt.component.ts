@@ -7,6 +7,8 @@ import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
+import { ReceiptScannerService } from '../../../services/receipt-scanner.service';
+import { parseReceiptText } from '../../../_helpers/receipt-parser';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import { money, moneyExact, isoDate, longDate } from '../../../_helpers/money';
 
@@ -30,10 +32,8 @@ interface LineItem {
  * 1024px the receipt preview and the review form sit side by side.
  *
  * NOTE ON OCR: the API exposes no receipt-parsing endpoint, so nothing is read
- * automatically. The review step starts empty and tells the user so, rather
- * than showing invented confidence scores. What *is* real: the category
- * suggestion (matched against your own category names) and the arithmetic
- * check on every line item.
+ * automatically. OCR runs locally in the browser and only prefills the review
+ * form; saving always remains an explicit user action.
  */
 @Component({
   selector: 'app-scan-receipt',
@@ -63,6 +63,9 @@ export class ScanReceiptComponent implements OnInit {
   readonly previewUrl = signal<string | null>(null);
   readonly isDragging = signal(false);
   readonly fileError = signal('');
+  readonly ocrStatus = signal<'idle' | 'scanning' | 'done' | 'unsupported' | 'error'>('idle');
+  readonly ocrProgress = signal(0);
+  readonly ocrMessage = signal('');
 
   /* ------------------------------------------------------------- review */
 
@@ -117,6 +120,7 @@ export class ScanReceiptComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private expenseCategoryService: ExpenseCategoryService,
+    private receiptScanner: ReceiptScannerService,
     private router: Router
   ) {}
 
@@ -177,6 +181,39 @@ export class ScanReceiptComponent implements OnInit {
       file.type.startsWith('image/') ? URL.createObjectURL(file) : null
     );
     this.step.set(2);
+
+    if (file.type.startsWith('image/')) {
+      void this.scanReceipt(file);
+    } else {
+      this.ocrStatus.set('unsupported');
+      this.ocrMessage.set('OCR is available for receipt images, not PDF files.');
+    }
+  }
+
+  private async scanReceipt(file: File): Promise<void> {
+    this.ocrStatus.set('scanning');
+    this.ocrProgress.set(0);
+    this.ocrMessage.set('Reading receipt locally…');
+
+    try {
+      const text = await this.receiptScanner.recognize(file, (progress) => {
+        this.ocrProgress.set(progress.progress);
+        this.ocrMessage.set(progress.status || 'Reading receipt locally…');
+      });
+      const parsed = parseReceiptText(text);
+      if (parsed.merchant) this.shop = parsed.merchant;
+      if (parsed.date) this.date = parsed.date;
+      if (parsed.amount) this.total = parsed.amount;
+      this.ocrStatus.set('done');
+      this.ocrMessage.set(
+        parsed.confidence === 'low'
+          ? 'Receipt read with low confidence. Please check every field.'
+          : `Receipt read with ${parsed.confidence} confidence. Please review the fields.`
+      );
+    } catch {
+      this.ocrStatus.set('error');
+      this.ocrMessage.set('Could not read this image. Please enter the details manually.');
+    }
   }
 
   useCamera(): void {
@@ -261,6 +298,9 @@ export class ScanReceiptComponent implements OnInit {
     this.total = null;
     this.items.set([]);
     this.saveError.set('');
+    this.ocrStatus.set('idle');
+    this.ocrProgress.set(0);
+    this.ocrMessage.set('');
     this.step.set(1);
   }
 

@@ -1,3 +1,15 @@
 :host {
   display: block;
 }
+
+.dash-envelope-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dash-envelope-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}

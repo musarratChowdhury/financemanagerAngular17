@@ -168,6 +168,26 @@
   } }
 </div>
 
+@if (envelopeBudgets().length) {
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <div>
+      <h2 class="syp-h2">Envelope check</h2>
+      <div class="syp-sub" style="font-size: 13px">Your highest-utilisation limits this month.</div>
+    </div>
+    <a class="syp-link" routerLink="/envelopes">Manage limits</a>
+  </div>
+  <div class="dash-envelope-list">
+    @for (budget of envelopeBudgets(); track budget.categoryId) {
+    <div class="dash-envelope-row">
+      <span>{{ budget.categoryName }}</span>
+      <strong>{{ money(budget.spentAmount) }} / {{ money(budget.limitAmount) }}</strong>
+    </div>
+    }
+  </div>
+</div>
+}
+
 <!-- ======================= categories + months ======================= -->
 <div class="syp-grid syp-grid--20" style="margin-bottom: 16px">
   <!-- Spending by category -->

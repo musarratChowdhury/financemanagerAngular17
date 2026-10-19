@@ -25,7 +25,8 @@
               }
             ],
             "styles": ["src/styles.css", "src/syp-theme.css"],
-            "scripts": []
+            "scripts": [],
+            "allowedCommonJsDependencies": ["tesseract.js", "regenerator-runtime"]
           },
           "configurations": {
             "production": {
@@ -41,7 +42,8 @@
                   "maximumError": "8kB"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "serviceWorker": "ngsw-config.json"
             },
             "development": {
               "optimization": false,

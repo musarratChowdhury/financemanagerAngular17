@@ -1,0 +1,123 @@
+<app-mobilebar title="Envelopes"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Plan the month</div>
+    <h1 class="syp-h1">Envelope budget</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      Set a ceiling for each category. Spending is derived from your ledger.
+    </p>
+  </div>
+  <div class="syp-head-actions">
+    <label class="syp-sr-only" for="env-month">Month</label>
+    <select id="env-month" class="syp-select" [value]="selectedMonth()" (change)="onMonth($any($event.target).value)">
+      @for (month of months; track month) {
+      <option [value]="month">{{ monthNames[month - 1] }}</option>
+      }
+    </select>
+    <label class="syp-sr-only" for="env-year">Year</label>
+    <select id="env-year" class="syp-select" [value]="selectedYear()" (change)="onYear($any($event.target).value)">
+      @for (year of years; track year) {
+      <option [value]="year">{{ year }}</option>
+      }
+    </select>
+  </div>
+</div>
+
+@if (failed()) {
+<div class="syp-card syp-card--pad">
+  <div class="syp-empty">
+    <div class="syp-empty__title">Could not load your envelopes</div>
+    <p class="syp-sub">Your category or monthly spending data did not respond.</p>
+    <button class="syp-btn syp-btn--primary" type="button" (click)="load()">Try again</button>
+  </div>
+</div>
+} @else {
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <div>
+      <div class="syp-h2">Highest utilisation</div>
+      <div class="syp-sub" style="font-size: 13px">{{ configured().length }} limit{{ configured().length === 1 ? '' : 's' }} set</div>
+    </div>
+    <a class="syp-btn syp-btn--quiet syp-btn--sm" routerLink="/expenses">Add expense</a>
+  </div>
+  @if (loading()) {
+  <div class="syp-skeleton" style="height: 56px"></div>
+  } @else if (!topUtilisation().length) {
+  <p class="syp-sub">Set your first limit below to start tracking category utilisation.</p>
+  } @else {
+  <div class="env-top-list">
+    @for (budget of topUtilisation(); track budget.categoryId) {
+    <div class="env-top-row">
+      <span>{{ budget.categoryName }}</span>
+      <strong>{{ money(budget.spentAmount) }} / {{ money(budget.limitAmount) }}</strong>
+    </div>
+    }
+  </div>
+  }
+</div>
+
+@if (saveError()) {
+<div class="syp-notice" role="alert" style="margin-bottom: 16px">{{ saveError() }}</div>
+}
+
+<div class="syp-card syp-card--flush">
+  <div class="syp-card-head">
+    <div>
+      <div class="syp-h2">Category limits</div>
+      <div class="syp-sub" style="font-size: 13px">Green under 80%, amber from 80%, red when over.</div>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <div class="syp-stack" style="padding: 20px">
+    <div class="syp-skeleton" style="height: 90px"></div>
+    <div class="syp-skeleton" style="height: 90px"></div>
+  </div>
+  } @else if (!budgets().length) {
+  <div class="syp-empty" style="padding: 36px 20px">
+    <div class="syp-empty__title">No categories found</div>
+    <p class="syp-sub">Create an expense category before setting a limit.</p>
+  </div>
+  } @else {
+  <div class="env-list">
+    @for (budget of budgets(); track budget.categoryId) {
+    <div class="env-row">
+      <div class="env-row__top">
+        <div>
+          <div class="env-row__name">{{ budget.categoryName }}</div>
+          <div class="env-row__spent">
+            {{ money(budget.spentAmount) }} spent
+            @if (budget.limitAmount > 0) { · {{ money(budget.limitAmount) }} limit }
+          </div>
+        </div>
+        <div class="env-row__input">
+          <label class="syp-sr-only" [for]="'limit-' + budget.categoryId">Limit for {{ budget.categoryName }}</label>
+          <input
+            [id]="'limit-' + budget.categoryId"
+            class="syp-input syp-input--cell"
+            type="number"
+            min="0"
+            step="0.01"
+            inputmode="decimal"
+            [(ngModel)]="budget.limitAmount"
+            (change)="save(budget)"
+          />
+        </div>
+      </div>
+      <div class="env-bar" role="progressbar" [attr.aria-valuenow]="percent(budget)" aria-valuemin="0" aria-valuemax="100">
+        <div class="env-bar__fill" [class.is-safe]="status(budget) === 'safe'" [class.is-warning]="status(budget) === 'warning'" [class.is-over]="status(budget) === 'over'" [style.width.%]="percent(budget)"></div>
+      </div>
+      <div class="env-row__foot">
+        <span>{{ percent(budget) | number:'1.0-0' }}% used</span>
+        @if (saving() === budget.categoryId) { <span>Saving…</span> }
+        @else if (status(budget) === 'over') { <strong class="env-over">Over limit</strong> }
+        @else if (status(budget) === 'warning') { <strong class="env-warning">Near limit</strong> }
+        @else if (status(budget) === 'safe') { <strong class="env-safe">On track</strong> }
+      </div>
+    </div>
+    }
+  </div>
+  }
+</div>
+}

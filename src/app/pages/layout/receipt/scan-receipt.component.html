@@ -133,11 +133,7 @@
       <circle cx="12" cy="12" r="10"></circle>
       <path d="M12 16v-4M12 8h.01"></path>
     </svg>
-    <span>
-      Receipt reading is not connected to a text-recognition service yet, so the
-      next step starts blank for you to type from the photo. Your category
-      suggestion and the line-item arithmetic are live.
-    </span>
+    <span>Receipt reading runs locally in your browser. It only prefills the review form; nothing is saved automatically.</span>
   </div>
 </div>
 } @else if (step() === 2) {
@@ -186,6 +182,15 @@
   <!-- review form -->
   <div class="syp-card syp-card--pad syp-col-520">
     <h2 class="syp-h2" style="margin-bottom: 16px">Expense details</h2>
+
+    @if (ocrStatus() === 'scanning' || ocrStatus() === 'done' || ocrStatus() === 'error' || ocrStatus() === 'unsupported') {
+    <div class="syp-notice syp-notice--info" role="status" style="margin-bottom: 16px">
+      @if (ocrStatus() === 'scanning') {
+      <progress class="progress progress-primary" [value]="ocrProgress() * 100" max="100"></progress>
+      }
+      <span>{{ ocrMessage() }}</span>
+    </div>
+    }
 
     @if (saveError()) {
     <div class="syp-notice" role="alert">

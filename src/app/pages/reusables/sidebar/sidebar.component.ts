@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { StorageService } from '../../../services/storage.service';
+import { OfflineStoreService } from '../../../services/offline-store.service';
 
 interface NavItem {
   label: string;
@@ -53,20 +54,26 @@ export class SidebarComponent {
       link: '/current-needs',
       path: 'M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
     },
+    {
+      label: 'Envelopes',
+      link: '/envelopes',
+      path: 'M4 4h16v16H4z M4 9h16 M8 14h4',
+    },
   ];
 
-  constructor(
-    private authService: AuthService,
-    private storageService: StorageService,
-    private router: Router
-  ) {}
+  private readonly authService = inject(AuthService);
+  private readonly storageService = inject(StorageService);
+  private readonly offlineStore = inject(OfflineStoreService);
+  private readonly router = inject(Router);
 
   signOut(): void {
-    // Clear locally first so a failed server call cannot strand the user.
-    this.storageService.clean();
-    this.authService.logout().subscribe({
-      next: () => this.router.navigate(['/login']),
-      error: () => this.router.navigate(['/login']),
+    // Clear offline data first so a failed server call cannot strand the user
+    this.offlineStore.clearUserData().then(() => {
+      this.storageService.clean();
+      this.authService.logout().subscribe({
+        next: () => this.router.navigate(['/login']),
+        error: () => this.router.navigate(['/login']),
+      });
     });
   }
 }
