@@ -1,0 +1,60 @@
+:host {
+  display: block;
+}
+
+/* Search strip above the list. */
+.syp-cat-tools {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--syp-border);
+}
+
+.syp-cat-tools > .syp-input {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+}
+
+.syp-cat-pad {
+  padding: 0 16px;
+}
+
+/* The category colour chip — a small dot rather than a full swatch. */
+.syp-cat-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.syp-cat-amount {
+  flex: none;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.syp-cat-none {
+  font-size: 13px;
+}
+
+/* Actions sit tight to the amount on phones. */
+.syp-cat-actions {
+  flex: none;
+  display: flex;
+  gap: 4px;
+  margin-left: 4px;
+}
+
+@media (min-width: 640px) {
+  .syp-cat-tools {
+    padding: 18px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .syp-cat-pad {
+    padding: 0 24px;
+  }
+}

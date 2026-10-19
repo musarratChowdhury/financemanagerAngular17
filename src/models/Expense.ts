@@ -1,3 +1,5 @@
+import { uuid } from '../app/_helpers/uuid';
+
 export class Expense {
   public id: number;
   public clientId: string;
@@ -11,6 +13,6 @@ export class Expense {
     public ExpenseCategoryId: number
   ) {
     this.id = 0;
-    this.clientId = crypto.randomUUID();
+    this.clientId = uuid();
   }
 }

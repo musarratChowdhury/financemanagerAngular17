@@ -1,98 +1,247 @@
-<div class="cash-flow-page">
-  <header class="page-header">
-    <div>
-      <p class="eyebrow">Money movement</p>
-      <h1>Cash flow</h1>
-      <p class="subtitle">See where your monthly income goes at a glance.</p>
+<app-mobilebar title="Cash flow"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Money movement</div>
+    <h1 class="syp-h1">Cash flow</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      See where your monthly income goes at a glance.
+    </p>
+  </div>
+
+  <div class="syp-head-actions">
+    <div class="syp-period">
+      <label class="syp-sr-only" for="cf-month">Month</label>
+      <select
+        id="cf-month"
+        class="syp-select"
+        [value]="selectedMonth()"
+        (change)="onMonth($any($event.target).value)"
+      >
+        @for (m of months; track m) {
+        <option [value]="m">{{ monthNames[m - 1] }}</option>
+        }
+      </select>
+
+      <label class="syp-sr-only" for="cf-year">Year</label>
+      <select
+        id="cf-year"
+        class="syp-select"
+        [value]="selectedYear()"
+        (change)="onYear($any($event.target).value)"
+      >
+        @for (y of years; track y) {
+        <option [value]="y">{{ y }}</option>
+        }
+      </select>
     </div>
-    <div class="period-controls">
-      <label>
-        <span>Month</span>
-        <select [(ngModel)]="selectedMonth" (change)="loadMonth()">
-          <option [ngValue]="1">January</option>
-          <option [ngValue]="2">February</option>
-          <option [ngValue]="3">March</option>
-          <option [ngValue]="4">April</option>
-          <option [ngValue]="5">May</option>
-          <option [ngValue]="6">June</option>
-          <option [ngValue]="7">July</option>
-          <option [ngValue]="8">August</option>
-          <option [ngValue]="9">September</option>
-          <option [ngValue]="10">October</option>
-          <option [ngValue]="11">November</option>
-          <option [ngValue]="12">December</option>
-        </select>
-      </label>
-      <label>
-        <span>Year</span>
-        <select [(ngModel)]="selectedYear" (change)="loadMonth()">
-          <option *ngFor="let year of years" [ngValue]="year">{{ year }}</option>
-        </select>
-      </label>
-    </div>
-  </header>
-
-  <div *ngIf="errorMessage" class="alert error">{{ errorMessage }}</div>
-  <div *ngIf="successMessage" class="alert success">{{ successMessage }}</div>
-
-  <section class="summary-grid">
-    <article class="summary-card income-card">
-      <span>Income</span>
-      <strong>{{ monthlyIncome | number: '1.2-2' }}</strong>
-    </article>
-    <article class="summary-card expense-card">
-      <span>Expenses</span>
-      <strong>{{ monthlyExpenses | number: '1.2-2' }}</strong>
-    </article>
-    <article class="summary-card" [class.negative-card]="remainingBalance < 0">
-      <span>{{ remainingBalance < 0 ? 'Over budget' : 'Remaining' }}</span>
-      <strong>{{ remainingBalance | number: '1.2-2' }}</strong>
-    </article>
-  </section>
-
-  <section class="content-grid">
-    <article class="chart-card">
-      <div class="card-heading">
-        <div>
-          <p class="eyebrow">Selected period</p>
-          <h2>{{ monthLabel }}</h2>
-        </div>
-        <span *ngIf="loading" class="loading-label">Loading...</span>
-      </div>
-      <app-sankey [income]="monthlyIncome" [expenses]="expenses"></app-sankey>
-    </article>
-
-    <article class="income-card-panel">
-      <p class="eyebrow">Add income</p>
-      <h2>Update this month</h2>
-      <p class="panel-copy">Add another income entry for {{ monthLabel }}.</p>
-      <form (ngSubmit)="saveIncome()">
-        <label>
-          <span>Amount</span>
-          <input
-            type="number"
-            name="incomeAmount"
-            min="0.01"
-            step="0.01"
-            required
-            [(ngModel)]="incomeAmount"
-            placeholder="0.00"
-          />
-        </label>
-        <label>
-          <span>Note <small>(optional)</small></span>
-          <input
-            type="text"
-            name="incomeNote"
-            maxlength="100"
-            [(ngModel)]="incomeNote"
-            placeholder="Salary, freelance, etc."
-          />
-        </label>
-        <button type="submit" [disabled]="saving">
-          {{ saving ? 'Saving...' : 'Add income' }}
-        </button>
-      </form>
-    </article>
-  </section>
+  </div>
 </div>
+
+@if (failed()) {
+<div class="syp-card syp-card--pad">
+  <div class="syp-empty">
+    <div class="syp-empty__title">Could not load this month</div>
+    <p class="syp-sub">The budget service did not respond.</p>
+    <button type="button" class="syp-btn syp-btn--primary" (click)="loadMonth()">
+      Try again
+    </button>
+  </div>
+</div>
+} @else {
+<!-- ============================== KPIs ============================== -->
+<div class="syp-kpis" style="margin-bottom: 16px">
+  <div class="syp-kpi">
+    <div class="syp-kpi-label">Income</div>
+    @if (loading()) {
+    <div class="syp-skeleton" style="height: 32px; width: 70%"></div>
+    } @else {
+    <div class="syp-num">{{ money(income()) }}</div>
+    <div class="syp-kpi-foot">Recorded this month</div>
+    }
+  </div>
+
+  <div class="syp-kpi">
+    <div class="syp-kpi-label">Expenses</div>
+    @if (loading()) {
+    <div class="syp-skeleton" style="height: 32px; width: 70%"></div>
+    } @else {
+    <div class="syp-num">{{ money(expenses()) }}</div>
+    <div class="syp-kpi-foot">Across {{ flows().length }} categories</div>
+    }
+  </div>
+
+  <div class="syp-kpi" [class.syp-kpi--danger]="isOver()">
+    <div class="syp-kpi-label">{{ isOver() ? 'Over budget' : 'Remaining' }}</div>
+    @if (loading()) {
+    <div class="syp-skeleton" style="height: 32px; width: 70%"></div>
+    } @else {
+    <div class="syp-num">{{ moneyNegative(balance()) }}</div>
+    <div class="syp-kpi-foot">
+      {{ isOver() ? 'More out than in' : 'Available to save' }}
+    </div>
+    }
+  </div>
+</div>
+
+<div class="syp-grid syp-grid--20">
+  <!-- ========================== where it went ========================== -->
+  <div class="syp-card syp-card--pad syp-col-520">
+    <div class="syp-eyebrow">Selected period</div>
+    <h2 class="syp-h2" style="margin: 4px 0 14px">{{ monthLabel() }}</h2>
+
+    <div class="syp-notice syp-notice--info" role="status">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 16v-4M12 8h.01"></path>
+      </svg>
+      <span>{{ fundingNote() }}</span>
+    </div>
+
+    <div class="syp-flow-head">
+      <div class="syp-h3">Where the {{ money(expenses()) }} went</div>
+      <div class="syp-sub" style="font-size: 13px">
+        Bar length is relative to the largest category
+      </div>
+    </div>
+
+    @if (loading()) {
+    @for (n of [0, 1, 2, 3, 4, 5]; track n) {
+    <div class="syp-skeleton" style="height: 40px; margin-bottom: 10px"></div>
+    } } @else if (!flows().length) {
+    <div class="syp-empty">
+      <div class="syp-empty__title">No spending recorded</div>
+      <p class="syp-sub">Add an expense to see the breakdown here.</p>
+    </div>
+    } @else {
+    <div class="syp-flow">
+      @for (flow of flows(); track flow.categoryId) {
+      <div class="syp-flow__row">
+        <div class="syp-flow__name">{{ flow.categoryName }}</div>
+        <div class="syp-flow__track">
+          <div
+            class="syp-flow__fill"
+            [style.width.%]="flow.width"
+            [style.background]="flow.color"
+          ></div>
+        </div>
+        <div class="syp-flow__amt">{{ money(flow.totalAmount) }}</div>
+        <div class="syp-flow__pct">{{ flow.percent.toFixed(1) }}%</div>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+  <!-- =========================== add income =========================== -->
+  <div class="syp-panel-ink syp-col-340">
+    <div class="syp-eyebrow">Add income</div>
+    <h2 class="syp-h2" style="margin: 4px 0 10px">Update this month</h2>
+    <p>Add another income entry for {{ monthLabel() }}.</p>
+
+    @if (saveError()) {
+    <div class="syp-notice" role="alert" style="margin-bottom: 16px">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 8v4M12 16h.01"></path>
+      </svg>
+      <span>{{ saveError() }}</span>
+    </div>
+    }
+
+    @if (saved()) {
+    <div class="syp-notice syp-notice--good" role="status" style="margin-bottom: 16px">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M20 6L9 17l-5-5"></path>
+      </svg>
+      <span>Income added to {{ monthLabel() }}.</span>
+    </div>
+    }
+
+    <div class="syp-field">
+      <label class="syp-label" for="cf-amount">Amount</label>
+      <input
+        id="cf-amount"
+        type="text"
+        inputmode="decimal"
+        class="syp-input syp-input--lg"
+        placeholder="0.00"
+        [(ngModel)]="incomeAmount"
+        (keyup.enter)="saveIncome()"
+      />
+    </div>
+
+    <div class="syp-field">
+      <label class="syp-label" for="cf-note">
+        <span>Note</span>
+        <span class="syp-label__opt">(optional)</span>
+      </label>
+      <input
+        id="cf-note"
+        type="text"
+        class="syp-input syp-input--lg"
+        placeholder="Salary, freelance, etc."
+        [(ngModel)]="incomeNote"
+        (keyup.enter)="saveIncome()"
+      />
+    </div>
+
+    <button
+      type="button"
+      class="syp-btn syp-btn--lime syp-btn--lg syp-btn--block"
+      [disabled]="saving()"
+      (click)="saveIncome()"
+    >
+      {{ saving() ? 'Saving…' : 'Add income' }}
+    </button>
+  </div>
+</div>
+
+<!-- ============================ money flow ============================ -->
+<div class="syp-card syp-card--pad" style="margin-top: 16px">
+  <div class="syp-card-head syp-card-head--tight">
+    <div>
+      <div class="syp-h2">Money flow</div>
+      <div class="syp-sub" style="font-size: 13px">
+        How income covers each category — and what is left unfunded.
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+  <div class="syp-skeleton" style="height: 320px"></div>
+  } @else {
+  <app-sankey [income]="income()" [expenses]="sankeyExpenses()"></app-sankey>
+  }
+</div>
+}

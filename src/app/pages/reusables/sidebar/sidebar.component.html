@@ -1,0 +1,57 @@
+<aside class="syp-sidebar" aria-label="Main navigation">
+  <div>
+    <a class="syp-brand" routerLink="/dashboard">
+      <span class="syp-brand__mark" aria-hidden="true">SP</span>
+      <span class="syp-brand__name">Save Your<br />Penny</span>
+    </a>
+
+    <nav class="syp-nav">
+      @for (item of nav; track item.link) {
+      <a
+        class="syp-nav__link"
+        [routerLink]="item.link"
+        routerLinkActive="is-active"
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path [attr.d]="item.path"></path>
+        </svg>
+        <span>{{ item.label }}</span>
+      </a>
+      }
+    </nav>
+  </div>
+
+  <div class="syp-account">
+    <div class="syp-account__avatar" aria-hidden="true">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        <circle cx="12" cy="7" r="4"></circle>
+      </svg>
+    </div>
+    <div style="min-width: 0">
+      <div class="syp-account__name">My account</div>
+      <button type="button" class="syp-account__action" (click)="signOut()">
+        Sign out
+      </button>
+    </div>
+  </div>
+</aside>

@@ -1,0 +1,147 @@
+:host {
+  display: block;
+}
+
+/* Stepper labels hide on the narrowest phones so all three steps fit. */
+.syp-stepper__label {
+  display: none;
+}
+
+/* Upload zone actions: stacked full-width on a phone, inline from 480px. */
+.syp-dropzone__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.syp-dropzone__actions > .syp-btn,
+.syp-dropzone__actions > label.syp-btn {
+  width: 100%;
+  text-align: center;
+}
+
+/* A `<label>` styled as a button needs the button's box behaviour. */
+label.syp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------------ preview */
+
+.syp-receipt-frame {
+  overflow: hidden;
+}
+
+.syp-receipt-frame > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--syp-r-sm);
+}
+
+/* --------------------------------------------------------------- line items */
+
+/* The global .syp-lines rules are built for read-only text; here every cell is
+   an input, so the row needs a tighter grid and the delete button gets its own
+   slot. */
+.syp-lines__row {
+  flex-wrap: wrap;
+}
+
+.syp-input--cell {
+  width: 100%;
+  height: 36px;
+  padding: 0 8px;
+  font-size: 14px;
+  border-radius: var(--syp-r-sm);
+  background: #fff;
+}
+
+.syp-lines__c-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: visible;
+  white-space: normal;
+}
+
+.syp-lines__flag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--syp-warn);
+}
+
+.syp-lines__del {
+  flex: none;
+  margin-left: auto;
+}
+
+/* Amounts should never wrap mid-number. */
+.syp-input--cell.syp-right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------- suggestion */
+
+.syp-suggest {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--syp-lime-ink);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.syp-suggest:hover {
+  color: var(--syp-ink);
+}
+
+@media (min-width: 480px) {
+  .syp-dropzone__actions {
+    flex-direction: row;
+    max-width: none;
+    justify-content: center;
+  }
+
+  .syp-dropzone__actions > .syp-btn,
+  .syp-dropzone__actions > label.syp-btn {
+    width: auto;
+  }
+}
+
+@media (min-width: 560px) {
+  .syp-stepper__label {
+    display: inline;
+  }
+
+  /* Unit price column becomes useful once there is room for four cells. */
+  .syp-lines__c-unit {
+    display: block;
+  }
+
+  .syp-lines__row {
+    flex-wrap: nowrap;
+  }
+
+  .syp-lines__del {
+    margin-left: 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .syp-stepper__step {
+    gap: 8px;
+  }
+
+  .syp-stepper__bar {
+    width: 28px;
+  }
+}

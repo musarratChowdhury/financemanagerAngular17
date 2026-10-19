@@ -51,8 +51,16 @@ jobs:
 
       - name: Test
         run: |
+          # `**` only spans directories when globstar is on; without it this glob is
+          # effectively `src/*/*.spec.ts`, which silently skips every spec nested deeper
+          # (e.g. src/app/services/*.spec.ts). Tests would look green while never running.
+          shopt -s globstar
           if [ -d "node_modules/karma-chrome-launcher" ] && compgen -G "src/**/*.spec.ts" > /dev/null; then
-            npx ng test --watch=false --browsers=ChromeHeadlessCI
+            # ChromeHeadlessNoSandbox is provided by the Angular karma builder itself, with the
+            # --no-sandbox flags a containerised runner needs. A custom "ChromeHeadlessCI"
+            # launcher does NOT exist: the builder ignores karma.conf.js unless the "karmaConfig"
+            # option is set in angular.json, which this project deliberately does not do.
+            npx ng test --watch=false --browsers=ChromeHeadlessNoSandbox
           else
             echo "No specs or karma-chrome-launcher missing; skipping tests."
           fi

@@ -1,0 +1,307 @@
+<app-mobilebar title="Expenses"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Ledger</div>
+    <h1 class="syp-h1">Expenses</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      Every purchase, in one place — {{ filtered().length }} recorded.
+    </p>
+  </div>
+
+  <div class="syp-head-actions">
+    <a class="syp-btn syp-btn--primary" routerLink="/scan-receipt">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path
+          d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+        ></path>
+        <circle cx="12" cy="13" r="4"></circle>
+      </svg>
+      Scan receipt
+    </a>
+  </div>
+</div>
+
+<div class="syp-grid syp-grid--20">
+  <!-- ========================= add form ========================= -->
+  <div class="syp-card syp-card--pad syp-col-340">
+    <h2 class="syp-h2" style="margin-bottom: 16px">Add new expense</h2>
+
+    <a class="syp-cta-tile" routerLink="/scan-receipt">
+      <span class="syp-cta-tile__icon" aria-hidden="true">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+          ></path>
+          <circle cx="12" cy="13" r="4"></circle>
+        </svg>
+      </span>
+      <span>
+        <span class="syp-cta-tile__title">Scan a receipt</span>
+        <span class="syp-cta-tile__hint">Fill this form from a photo</span>
+      </span>
+    </a>
+
+    @if (saveError()) {
+    <div class="syp-notice" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 8v4M12 16h.01"></path>
+      </svg>
+      <span>Could not save the expense. Please try again.</span>
+    </div>
+    }
+
+    <div class="syp-field">
+      <label class="syp-label" for="ex-title">Title</label>
+      <input
+        id="ex-title"
+        type="text"
+        class="syp-input"
+        placeholder="e.g. Weekly bazaar"
+        [(ngModel)]="title"
+      />
+    </div>
+
+    <div class="syp-field">
+      <label class="syp-label" for="ex-cat">Category</label>
+      <ejs-dropdownlist
+        id="ex-cat"
+        [dataSource]="categories()"
+        [fields]="{ text: 'name', value: 'id' }"
+        placeholder="Select a category"
+        [(ngModel)]="categoryId"
+        width="100%"
+      ></ejs-dropdownlist>
+    </div>
+
+    <div class="syp-split" style="margin-bottom: 14px">
+      <div>
+        <label class="syp-label" for="ex-qty">Quantity</label>
+        <ejs-numerictextbox
+          id="ex-qty"
+          [value]="quantity ?? undefined"
+          [min]="0"
+          [showSpinButton]="false"
+          width="100%"
+          (change)="onQuantity($any($event).value)"
+        ></ejs-numerictextbox>
+      </div>
+      <div>
+        <label class="syp-label" for="ex-unit">Unit price</label>
+        <ejs-numerictextbox
+          id="ex-unit"
+          [value]="unitPrice ?? undefined"
+          [min]="0"
+          [showSpinButton]="false"
+          width="100%"
+          (change)="onUnitPrice($any($event).value)"
+        ></ejs-numerictextbox>
+      </div>
+    </div>
+
+    <div class="syp-split" style="margin-bottom: 18px">
+      <div>
+        <label class="syp-label" for="ex-amt">Amount</label>
+        <ejs-numerictextbox
+          id="ex-amt"
+          [value]="amount ?? undefined"
+          [min]="0"
+          [showSpinButton]="false"
+          width="100%"
+          (change)="amount = $any($event).value"
+        ></ejs-numerictextbox>
+      </div>
+      <div>
+        <label class="syp-label" for="ex-date">Date</label>
+        <ejs-datepicker
+          id="ex-date"
+          [value]="date"
+          [format]="'dd MMM yyyy'"
+          width="100%"
+          (change)="onDateChange($any($event).value)"
+        ></ejs-datepicker>
+      </div>
+    </div>
+
+    <div class="syp-row" style="gap: 12px">
+      <button
+        type="button"
+        class="syp-btn syp-btn--primary"
+        style="flex: 1"
+        [disabled]="!canSave()"
+        (click)="save()"
+      >
+        {{ saving() ? 'Saving…' : 'Add expense' }}
+      </button>
+      <button type="button" class="syp-btn syp-btn--quiet" (click)="clear()">
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================= ledger ========================= -->
+  <div class="syp-card syp-card--flush syp-col-520">
+    <div class="syp-ledger-tools">
+      <label class="syp-sr-only" for="ex-search">Search expenses</label>
+      <input
+        id="ex-search"
+        type="search"
+        class="syp-input"
+        placeholder="Search expenses"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+
+      <label class="syp-sr-only" for="ex-filter">Filter by category</label>
+      <select
+        id="ex-filter"
+        class="syp-select"
+        [value]="filterCategory()"
+        (change)="onFilterCategory($any($event.target).value)"
+      >
+        <option value="all">All categories</option>
+        @for (cat of categories(); track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+        }
+      </select>
+    </div>
+
+    @if (loading()) {
+    <div style="padding: 16px">
+      @for (n of [0, 1, 2, 3, 4]; track n) {
+      <div class="syp-skeleton" style="height: 44px; margin-bottom: 8px"></div>
+      }
+    </div>
+    } @else if (!filtered().length) {
+    <div class="syp-empty">
+      <div class="syp-empty__title">No expenses found</div>
+      <p class="syp-sub">
+        @if (search() || filterCategory() !== 'all') { Try a different search or
+        category. } @else { Add your first expense using the form. }
+      </p>
+    </div>
+    } @else {
+    <!-- Phone: tappable rows -->
+    <div class="syp-list syp-ledger-pad syp-only-mobile">
+      @for (row of paged(); track row.id) {
+      <div class="syp-list__row">
+        <div class="syp-list__main">
+          <div class="syp-list__title">
+            {{ row.title }}
+            @if (row.scanned) {
+            <span class="syp-pill syp-pill--lime" style="margin-left: 6px"
+              >Scanned</span
+            >
+            }
+          </div>
+          <div class="syp-list__meta">
+            {{ row.categoryName }} · {{ shortDate(row.date) }}
+            @if (row.quantity) { · ×{{ row.quantity }} }
+          </div>
+        </div>
+        <div class="syp-list__amount">{{ money(row.amount) }}</div>
+      </div>
+      }
+    </div>
+
+    <!-- Tablet and up: the table from the design -->
+    <div class="syp-table-wrap syp-only-wide">
+      <table class="syp-table">
+        <thead>
+          <tr>
+            <th>Expense</th>
+            <th>Category</th>
+            <th class="syp-right">Qty</th>
+            <th class="syp-right">Unit</th>
+            <th class="syp-right">Amount</th>
+            <th class="syp-right">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of paged(); track row.id) {
+          <tr>
+            <td class="syp-table__title">
+              {{ row.title }}
+              @if (row.scanned) {
+              <span class="syp-pill syp-pill--lime" style="margin-left: 8px"
+                >Scanned</span
+              >
+              }
+            </td>
+            <td><span class="syp-pill">{{ row.categoryName }}</span></td>
+            <td class="syp-right">{{ row.quantity ?? '—' }}</td>
+            <td class="syp-right syp-muted">{{ money(row.unitPrice) }}</td>
+            <td class="syp-right" style="font-weight: 600">
+              {{ money(row.amount) }}
+            </td>
+            <td class="syp-right syp-muted">{{ shortDate(row.date) }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="syp-table-foot">
+      <div>
+        Page {{ page() }} of {{ pageCount() }} · {{ filtered().length }} items
+        @if (scannedCount() > 0) { · {{ scannedCount() }} scanned }
+      </div>
+      <div class="syp-pager">
+        <button
+          type="button"
+          class="syp-pager__btn"
+          [disabled]="page() === 1"
+          (click)="goToPage(page() - 1)"
+          aria-label="Previous page"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="syp-pager__btn"
+          [disabled]="page() === pageCount()"
+          (click)="goToPage(page() + 1)"
+          aria-label="Next page"
+        >
+          ›
+        </button>
+      </div>
+    </div>
+    }
+
+    <div class="syp-grand-total">
+      <span class="syp-grand-total__label">Grand total</span>
+      <span class="syp-grand-total__value">{{ money(grandTotal()) }}</span>
+    </div>
+  </div>
+</div>

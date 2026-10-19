@@ -1,36 +1,116 @@
-<div
-  id="container"
-  class="container mx-auto h-screen flex justify-center items-center"
->
-  <div class="card w-96 bg-primary text-primary-content">
-    <div class="card-body">
-      <h2 class="card-title">Login</h2>
-      <form (ngSubmit)="onSubmit()"></form>
-      <label class="input input-bordered flex items-center mb-2">
-        <input
-          [(ngModel)]="loginObj.email"
-          type="text"
-          class="grow text-white"
-          placeholder="Email"
-        />
-      </label>
-      <label class="input input-bordered flex items-center mb-2">
-        <input
-          [(ngModel)]="loginObj.password"
-          type="password"
-          class="grow text-white"
-          value="password"
-          placeholder="Password"
-        />
-      </label>
-      <button
-        [disabled]="loading"
-        (click)="onSubmit()"
-        type="submit"
-        class="btn btn-sm btn-info"
-      >
-        Submit
-      </button>
+<div class="syp-auth">
+  <!-- ==================== brand / pitch panel ==================== -->
+  <aside class="syp-auth__aside">
+    <a class="syp-auth__brand" routerLink="/login">
+      <span class="syp-brand__mark" aria-hidden="true">SP</span>
+      <span class="syp-brand__name">Save Your Penny</span>
+    </a>
+
+    <div>
+      <h1 class="syp-auth__pitch">Know where every penny goes.</h1>
+      <p class="syp-auth__lede">
+        Track spending by category, scan receipts instead of typing them, and
+        spot the waste that quietly drains your month.
+      </p>
+
+      <!-- savings preview card -->
+      <div class="syp-preview">
+        <div class="syp-preview__head">
+          <span>This month</span>
+          <span>Spent</span>
+        </div>
+        <div class="syp-preview__value">₨46,657</div>
+
+        <div class="syp-preview__bar" aria-hidden="true">
+          @for (seg of previewSegments; track $index) {
+          <span
+            [style.background]="seg.color"
+            [style.width.%]="seg.width"
+            style="display: block; height: 100%"
+          ></span>
+          }
+        </div>
+
+        <div class="syp-preview__legend">
+          <span>Baby &amp; Wife 39%</span>
+          <span>Bills 35%</span>
+          <span>Medicines 13%</span>
+        </div>
+      </div>
     </div>
-  </div>
+
+    <div class="syp-auth__copyright">
+      © MushCorps Ltd. All rights reserved.
+    </div>
+  </aside>
+
+  <!-- ==================== form ==================== -->
+  <main class="syp-auth__main">
+    <div class="syp-auth__form">
+      <h2 class="syp-auth__title">Welcome back</h2>
+      <p class="syp-auth__lede-sm">Sign in to see this month's budget.</p>
+
+      @if (isLoginFailed) {
+      <div class="syp-auth__error" role="alert">{{ errorMessage }}</div>
+      }
+
+      <form (ngSubmit)="onSubmit()" novalidate>
+        <div class="syp-field">
+          <label class="syp-label" for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            class="syp-input syp-input--lg"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+            [(ngModel)]="loginObj.email"
+          />
+        </div>
+
+        <div class="syp-field">
+          <label class="syp-label" for="password">
+            <span>Password</span>
+            <a class="syp-label__hint" href="#" (click)="$event.preventDefault()">
+              Forgot password?
+            </a>
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            class="syp-input syp-input--lg"
+            placeholder="Enter your password"
+            autocomplete="current-password"
+            required
+            [(ngModel)]="loginObj.password"
+          />
+        </div>
+
+        <div class="syp-auth__check" style="margin-bottom: 24px">
+          <input
+            id="keep"
+            name="keep"
+            type="checkbox"
+            [(ngModel)]="keepSignedIn"
+          />
+          <label for="keep">Keep me signed in on this device</label>
+        </div>
+
+        <button
+          type="submit"
+          class="syp-btn syp-btn--primary syp-btn--lg syp-btn--block"
+          [disabled]="loading"
+        >
+          {{ loading ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
+
+      <div class="syp-auth__foot">
+        New to Save Your Penny?
+        <a class="syp-link" routerLink="/register">Create an account</a>
+      </div>
+    </div>
+  </main>
 </div>

@@ -1,183 +1,117 @@
-.cash-flow-page {
-  padding: 2rem;
-  color: #172033;
+:host {
+  display: block;
 }
 
-.page-header,
-.card-heading {
+/* Month + year pickers sit as a pair in the page head. */
+.syp-period {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1.5rem;
+  gap: 8px;
+  flex: 1 1 100%;
 }
 
-.page-header {
-  margin-bottom: 1.5rem;
+.syp-period > .syp-select {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 44px;
+  font-size: 15px;
 }
 
-h1,
-h2,
-p {
-  margin: 0;
+/* Heading above the flow bars. */
+.syp-flow-head {
+  margin: 20px 0 14px;
 }
 
-h1 {
-  font-size: clamp(2rem, 4vw, 3.25rem);
+.syp-flow-head > .syp-sub {
+  margin-top: 2px;
 }
 
-.eyebrow {
-  color: #64748b;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.subtitle,
-.panel-copy {
-  color: #64748b;
-  margin-top: 0.4rem;
-}
-
-.period-controls,
-.summary-grid,
-.content-grid {
+/* Flow rows: name / track / amount / percent, stacking on the narrowest
+   screens so the amount never collides with the bar. */
+.syp-flow__row {
   display: grid;
-  gap: 1rem;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'name pct'
+    'track track'
+    'amt amt';
+  align-items: center;
+  gap: 6px 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--syp-divider);
 }
 
-.period-controls {
-  grid-template-columns: repeat(2, minmax(120px, 1fr));
+.syp-flow__row:last-child {
+  border-bottom: none;
 }
 
-label {
-  display: grid;
-  gap: 0.35rem;
-  color: #64748b;
-  font-size: 0.75rem;
-  font-weight: 700;
+.syp-flow__name {
+  grid-area: name;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--syp-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-select,
-input {
-  border: 1px solid #cbd5e1;
-  border-radius: 0.55rem;
-  background: #fff;
-  color: #172033;
-  padding: 0.65rem 0.75rem;
-  font: inherit;
+.syp-flow__track {
+  grid-area: track;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--syp-row);
+  overflow: hidden;
 }
 
-.alert {
-  border-radius: 0.6rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
+.syp-flow__fill {
+  height: 100%;
+  border-radius: 4px;
 }
 
-.error {
-  background: #fff1f2;
-  color: #be123c;
+.syp-flow__amt {
+  grid-area: amt;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--syp-ink);
 }
 
-.success {
-  background: #ecfdf5;
-  color: #047857;
+.syp-flow__pct {
+  grid-area: pct;
+  font-size: 13px;
+  color: var(--syp-ink-2);
+  font-variant-numeric: tabular-nums;
 }
 
-.summary-grid {
-  grid-template-columns: repeat(3, 1fr);
-  margin-bottom: 1rem;
-}
-
-.summary-card,
-.chart-card,
-.income-card-panel {
-  border: 1px solid #e2e8f0;
-  border-radius: 1rem;
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-}
-
-.summary-card {
-  display: grid;
-  gap: 0.35rem;
-  padding: 1.25rem;
-}
-
-.summary-card strong {
-  font-size: 1.65rem;
-}
-
-.income-card {
-  border-top: 4px solid #2563eb;
-}
-
-.expense-card {
-  border-top: 4px solid #e11d48;
-}
-
-.negative-card {
-  border-top: 4px solid #f97316;
-}
-
-.content-grid {
-  grid-template-columns: minmax(0, 1fr) 280px;
-  align-items: start;
-}
-
-.chart-card,
-.income-card-panel {
-  padding: 1.25rem;
-}
-
-.income-card-panel {
-  background: #172033;
-  color: #f8fafc;
-}
-
-.income-card-panel .eyebrow,
-.income-card-panel .panel-copy,
-.income-card-panel label {
-  color: #cbd5e1;
-}
-
-.income-card-panel form {
-  display: grid;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-button {
-  border: 0;
-  border-radius: 0.55rem;
-  background: #38bdf8;
-  color: #082f49;
-  cursor: pointer;
-  font-weight: 800;
-  padding: 0.7rem 1rem;
-}
-
-button:disabled {
-  cursor: wait;
-  opacity: 0.6;
-}
-
-@media (max-width: 800px) {
-  .cash-flow-page {
-    padding: 1rem;
+@media (min-width: 480px) {
+  .syp-flow__row {
+    grid-template-columns: 130px 1fr 84px 52px;
+    grid-template-areas: 'name track amt pct';
+    gap: 12px;
   }
 
-  .page-header,
-  .content-grid {
-    align-items: stretch;
-    grid-template-columns: 1fr;
+  .syp-flow__amt {
+    text-align: right;
   }
 
-  .page-header {
-    display: grid;
+  .syp-flow__pct {
+    text-align: right;
+  }
+}
+
+@media (min-width: 768px) {
+  .syp-period {
+    flex: 0 0 auto;
   }
 
-  .summary-grid {
-    grid-template-columns: 1fr;
+  .syp-period > .syp-select {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .syp-flow__row {
+    grid-template-columns: 150px 1fr 96px 56px;
   }
 }

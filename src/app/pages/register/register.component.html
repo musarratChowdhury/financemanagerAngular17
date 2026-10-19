@@ -1,43 +1,189 @@
-<div class="container mx-auto h-screen flex justify-center items-center">
-  <div class="card w-96 bg-primary text-primary-content">
-    <div class="card-body">
-      <h2 class="card-title">Registration</h2>
-      <form [formGroup]="_regForm" (ngSubmit)="proceedRegister()">
-        <label class="input input-bordered flex items-center mb-2">
+<div class="syp-auth">
+  <!-- ==================== form ==================== -->
+  <main class="syp-auth__main">
+    <div class="syp-auth__form syp-auth__form--wide">
+      <a class="syp-auth__brand" routerLink="/login" style="margin-bottom: 28px">
+        <span class="syp-brand__mark" aria-hidden="true">SP</span>
+        <span class="syp-brand__name" style="color: var(--syp-ink)">
+          Save Your Penny
+        </span>
+      </a>
+
+      <h1 class="syp-auth__title">Create your account</h1>
+      <p class="syp-auth__lede-sm">
+        Takes about a minute. You can add income and categories later.
+      </p>
+
+      @if (errorMessage()) {
+      <div class="syp-auth__error" role="alert">{{ errorMessage() }}</div>
+      }
+
+      @if (success()) {
+      <div class="syp-auth__error syp-auth__error--good" role="status">
+        Account created. Taking you to sign in…
+      </div>
+      }
+
+      <form [formGroup]="regForm" (ngSubmit)="proceedRegister()" novalidate>
+        <div class="syp-field">
+          <label class="syp-label" for="name">Full name</label>
           <input
+            id="name"
             type="text"
-            class="grow text-white"
-            placeholder="Email"
+            class="syp-input syp-input--lg"
+            placeholder="Your name"
+            autocomplete="name"
+            formControlName="fullName"
+          />
+        </div>
+
+        <div class="syp-field">
+          <label class="syp-label" for="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            class="syp-input syp-input--lg"
+            placeholder="you@example.com"
+            autocomplete="email"
             formControlName="username"
           />
-        </label>
-        <label class="input input-bordered flex items-center mb-2">
+        </div>
+
+        <div class="syp-field">
+          <label class="syp-label" for="pw">Password</label>
           <input
+            id="pw"
             type="password"
-            class="grow text-white"
-            value="password"
-            placeholder="Password"
+            class="syp-input syp-input--lg"
+            placeholder="At least 8 characters"
+            autocomplete="new-password"
             formControlName="password"
+            (input)="onPasswordInput($any($event.target).value)"
           />
-        </label>
-        <label class="input input-bordered flex items-center mb-2">
+
+          <!-- strength meter -->
+          <div class="syp-strength" aria-hidden="true">
+            @for (bar of [0, 1, 2, 3]; track bar) {
+            <span
+              class="syp-strength__bar"
+              [class.is-on]="strength() > bar"
+            ></span>
+            }
+            <span class="syp-strength__label">
+              {{ strength() >= 3 ? 'Strong' : strength() === 2 ? 'Fair' : 'Weak' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="syp-field">
+          <label class="syp-label" for="pw2">Confirm password</label>
           <input
+            id="pw2"
             type="password"
-            class="grow text-white"
-            value="password"
-            placeholder="Password"
+            class="syp-input syp-input--lg"
+            placeholder="Repeat your password"
+            autocomplete="new-password"
             formControlName="confirmPassword"
           />
-        </label>
+          @if (regForm.value.confirmPassword && !passwordsMatch) {
+          <div class="syp-field__error">Passwords do not match.</div>
+          }
+        </div>
+
+        <div class="syp-split" style="margin-bottom: 18px">
+          <div>
+            <label class="syp-label" for="cur">Currency</label>
+            <select id="cur" class="syp-select" formControlName="currency">
+              <option value="PKR">PKR (₨)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+            </select>
+          </div>
+          <div>
+            <label class="syp-label" for="inc">
+              <span>Monthly income</span>
+              <span class="syp-label__opt">(optional)</span>
+            </label>
+            <input
+              id="inc"
+              type="text"
+              inputmode="decimal"
+              class="syp-input syp-input--lg"
+              placeholder="0.00"
+              formControlName="monthlyIncome"
+            />
+          </div>
+        </div>
+
+        <div class="syp-auth__check" style="margin-bottom: 22px; align-items: flex-start">
+          <input
+            id="terms"
+            type="checkbox"
+            style="margin-top: 2px"
+            [checked]="termsAccepted()"
+            (change)="termsAccepted.set($any($event.target).checked)"
+          />
+          <label for="terms" style="line-height: 1.4">
+            I agree to the
+            <a class="syp-link" href="#" (click)="$event.preventDefault()">Terms</a>
+            and
+            <a class="syp-link" href="#" (click)="$event.preventDefault()"
+              >Privacy Policy</a
+            >.
+          </label>
+        </div>
+
         <button
           type="submit"
-          [disabled]="!checkValidity()"
-          [attr.data-magicNumber]="magicNumber"
-          class="btn btn-sm btn-info"
+          class="syp-btn syp-btn--primary syp-btn--lg syp-btn--block"
+          [disabled]="!canSubmit || submitting()"
         >
-          Register
+          {{ submitting() ? 'Creating…' : 'Create account' }}
         </button>
       </form>
+
+      <div class="syp-auth__foot">
+        Already have an account?
+        <a class="syp-link" routerLink="/login">Sign in</a>
+      </div>
     </div>
-  </div>
+  </main>
+
+  <!-- ==================== three steps ==================== -->
+  <aside class="syp-auth__steps">
+    <div class="syp-eyebrow" style="margin-bottom: 20px">
+      Get started in three steps
+    </div>
+
+    <div class="syp-step">
+      <div class="syp-step__num syp-step__num--on">1</div>
+      <div>
+        <div class="syp-step__title">Pick your categories</div>
+        <div class="syp-step__copy">
+          Start with Bazaar, Food, Medicines, Bills and more, or add your own.
+        </div>
+      </div>
+    </div>
+
+    <div class="syp-step">
+      <div class="syp-step__num syp-step__num--off">2</div>
+      <div>
+        <div class="syp-step__title">Scan a receipt</div>
+        <div class="syp-step__copy">
+          Snap a photo and we read the shop, date, items and total for you to
+          confirm.
+        </div>
+      </div>
+    </div>
+
+    <div class="syp-step">
+      <div class="syp-step__num syp-step__num--off">3</div>
+      <div>
+        <div class="syp-step__title">Watch your month take shape</div>
+        <div class="syp-step__copy">
+          The dashboard and cash flow update as you add expenses and income.
+        </div>
+      </div>
+    </div>
+  </aside>
 </div>

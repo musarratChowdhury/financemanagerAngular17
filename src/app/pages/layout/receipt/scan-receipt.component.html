@@ -1,0 +1,410 @@
+<app-mobilebar title="Scan receipt"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Receipt scan</div>
+    <h1 class="syp-h1">Review what we read</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      Upload a photo, confirm the details, then save it to your ledger.
+    </p>
+  </div>
+
+  <div class="syp-head-actions">
+    <ol class="syp-stepper" aria-label="Progress">
+      @for (label of steps; track label; let i = $index) {
+      <li
+        class="syp-stepper__step"
+        [class.is-current]="step() === i + 1"
+        [class.is-done]="step() > i + 1"
+      >
+        <span class="syp-stepper__dot">
+          @if (step() > i + 1) {
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M20 6L9 17l-5-5"></path>
+          </svg>
+          } @else { {{ i + 1 }} }
+        </span>
+        <span class="syp-stepper__label">{{ label }}</span>
+        @if (i < steps.length - 1) {
+        <span
+          class="syp-stepper__bar"
+          [class.is-done]="step() > i + 1"
+          aria-hidden="true"
+        ></span>
+        }
+      </li>
+      }
+    </ol>
+  </div>
+</div>
+
+@if (step() === 1) {
+<!-- ============================== upload ============================== -->
+<div class="syp-card syp-card--pad-lg">
+  <div
+    class="syp-dropzone"
+    [class.is-drag]="isDragging()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <span class="syp-dropzone__icon" aria-hidden="true">
+      <svg
+        width="30"
+        height="30"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <path d="M7 10l5-5 5 5M12 5v13"></path>
+      </svg>
+    </span>
+
+    <div class="syp-dropzone__title">Drop a receipt here</div>
+    <div class="syp-dropzone__hint">
+      JPG, PNG or PDF. Flat, well-lit photos read best.
+    </div>
+
+    @if (fileError()) {
+    <div class="syp-notice" role="alert" style="margin-top: 16px; text-align: left">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 8v4M12 16h.01"></path>
+      </svg>
+      <span>{{ fileError() }}</span>
+    </div>
+    }
+
+    <div class="syp-dropzone__actions">
+      <label class="syp-btn syp-btn--primary" for="receipt-file">
+        Upload file
+      </label>
+      <input
+        id="receipt-file"
+        type="file"
+        accept="image/jpeg,image/png,image/webp,application/pdf"
+        capture="environment"
+        class="syp-sr-only"
+        (change)="onFileSelected($event)"
+      />
+
+      <button type="button" class="syp-btn syp-btn--quiet" (click)="useCamera()">
+        Use camera
+      </button>
+    </div>
+  </div>
+
+  <div class="syp-notice syp-notice--info" style="margin-top: 20px">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 16v-4M12 8h.01"></path>
+    </svg>
+    <span>
+      Receipt reading is not connected to a text-recognition service yet, so the
+      next step starts blank for you to type from the photo. Your category
+      suggestion and the line-item arithmetic are live.
+    </span>
+  </div>
+</div>
+} @else if (step() === 2) {
+<!-- ============================== review ============================== -->
+<div class="syp-grid syp-grid--20">
+  <!-- receipt preview -->
+  <div class="syp-card syp-card--pad syp-col-420">
+    <div class="syp-card-head syp-card-head--tight">
+      <div>
+        <div class="syp-h2">Receipt image</div>
+        <div class="syp-sub" style="font-size: 13px">{{ fileName() }}</div>
+      </div>
+      <button type="button" class="syp-btn syp-btn--sm syp-btn--quiet" (click)="discard()">
+        Replace
+      </button>
+    </div>
+
+    <div class="syp-receipt-frame">
+      @if (previewUrl()) {
+      <img [src]="previewUrl()" [alt]="'Receipt ' + fileName()" />
+      } @else {
+      <!-- PDF: no inline preview, so show the document card instead. -->
+      <div class="syp-receipt" style="border: none">
+        <div class="syp-receipt__center syp-receipt__mark">{{ shop || 'Receipt' }}</div>
+        <div class="syp-receipt__center">PDF attached — {{ fileName() }}</div>
+        <div class="syp-receipt__rule"></div>
+        <div class="syp-receipt__center">
+          Enter the details from the document on the right.
+        </div>
+      </div>
+      }
+    </div>
+
+    <div class="syp-confidence">
+      <span class="syp-confidence__key">
+        <span class="syp-confidence__swatch syp-confidence__swatch--good"></span>
+        Read with high confidence
+      </span>
+      <span class="syp-confidence__key">
+        <span class="syp-confidence__swatch syp-confidence__swatch--warn"></span>
+        Please check
+      </span>
+    </div>
+  </div>
+
+  <!-- review form -->
+  <div class="syp-card syp-card--pad syp-col-520">
+    <h2 class="syp-h2" style="margin-bottom: 16px">Expense details</h2>
+
+    @if (saveError()) {
+    <div class="syp-notice" role="alert">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 8v4M12 16h.01"></path>
+      </svg>
+      <span>{{ saveError() }}</span>
+    </div>
+    }
+
+    <div class="syp-field">
+      <label class="syp-label" for="sr-shop">Shop</label>
+      <input
+        id="sr-shop"
+        type="text"
+        class="syp-input syp-input--lg"
+        placeholder="e.g. Green Leaf Pharmacy"
+        [(ngModel)]="shop"
+      />
+    </div>
+
+    <div class="syp-split" style="margin-bottom: 14px">
+      <div>
+        <label class="syp-label" for="sr-date">Date</label>
+        <ejs-datepicker
+          id="sr-date"
+          [value]="date"
+          [format]="'dd MMM yyyy'"
+          width="100%"
+          (change)="date = $any($event).value ?? date"
+        ></ejs-datepicker>
+      </div>
+
+      <div>
+        <label class="syp-label" for="sr-total">Total</label>
+        <ejs-numerictextbox
+          id="sr-total"
+          [value]="total ?? undefined"
+          [min]="0"
+          [showSpinButton]="false"
+          width="100%"
+          (change)="total = $any($event).value"
+        ></ejs-numerictextbox>
+      </div>
+    </div>
+
+    <div class="syp-field">
+      <label class="syp-label" for="sr-cat">
+        <span>Category</span>
+        @if (suggestedCategoryId() !== null) {
+        <button
+          type="button"
+          class="syp-label__hint syp-suggest"
+          (click)="applySuggestion()"
+        >
+          Suggested — tap to use
+        </button>
+        }
+      </label>
+      <ejs-dropdownlist
+        id="sr-cat"
+        [dataSource]="categories()"
+        [fields]="{ text: 'name', value: 'id' }"
+        placeholder="Select a category"
+        [(ngModel)]="categoryId"
+        width="100%"
+      ></ejs-dropdownlist>
+    </div>
+
+    <!-- ------------------------------ line items ------------------------------ -->
+    <div class="syp-lines-head">
+      <div class="syp-h3">Line items</div>
+      <button type="button" class="syp-btn syp-btn--sm syp-btn--quiet" (click)="addItem()">
+        + Add item
+      </button>
+    </div>
+
+    @if (!items().length) {
+    <div class="syp-empty" style="padding: 24px 0">
+      <div class="syp-empty__title">No line items</div>
+      <p class="syp-sub">
+        Add them to split this receipt across several expenses, or save it as one
+        expense using the total.
+      </p>
+    </div>
+    } @else {
+    <div class="syp-lines">
+      <div class="syp-lines__head">
+        <div class="syp-lines__c-item">Item</div>
+        <div class="syp-lines__c-qty">Qty</div>
+        <div class="syp-lines__c-unit">Unit</div>
+        <div class="syp-lines__c-amt">Amount</div>
+      </div>
+
+      @for (item of items(); track item.key) {
+      <div class="syp-lines__row" [class.is-flag]="isItemSuspect(item)">
+        <div class="syp-lines__c-item">
+          <input
+            type="text"
+            class="syp-input syp-input--cell"
+            placeholder="Item name"
+            [value]="item.name"
+            (input)="onItemName(item.key, $any($event.target).value)"
+          />
+          @if (isItemSuspect(item)) {
+          <span class="syp-lines__flag">Check the amount</span>
+          }
+        </div>
+
+        <div class="syp-lines__c-qty">
+          <input
+            type="number"
+            class="syp-input syp-input--cell syp-right"
+            min="0"
+            [value]="item.qty ?? ''"
+            (input)="onItemQty(item.key, $any($event.target).valueAsNumber)"
+          />
+        </div>
+
+        <div class="syp-lines__c-unit">
+          <input
+            type="number"
+            class="syp-input syp-input--cell syp-right"
+            min="0"
+            [value]="item.unitPrice ?? ''"
+            (input)="onItemUnit(item.key, $any($event.target).valueAsNumber)"
+          />
+        </div>
+
+        <div class="syp-lines__c-amt">
+          <input
+            type="number"
+            class="syp-input syp-input--cell syp-right"
+            min="0"
+            [value]="item.amount ?? ''"
+            (input)="onItemAmount(item.key, $any($event.target).valueAsNumber)"
+          />
+        </div>
+
+        <button
+          type="button"
+          class="syp-btn syp-btn--icon syp-btn--danger syp-lines__del"
+          aria-label="Remove item"
+          (click)="removeItem(item.key)"
+        >
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      }
+    </div>
+
+    <div
+      class="syp-notice"
+      [class.syp-notice--good]="itemsMatchTotal()"
+      style="margin-top: 14px"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        @if (itemsMatchTotal()) {
+        <path d="M20 6L9 17l-5-5"></path>
+        } @else {
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 8v4M12 16h.01"></path>
+        }
+      </svg>
+      <span>
+        @if (itemsMatchTotal()) { Items add up to {{ money(itemsTotal()) }},
+        matching the receipt total. } @else { Items add up to {{
+        money(itemsTotal()) }} but the total says {{ money(total) }}. }
+      </span>
+    </div>
+    }
+
+    <div class="syp-row" style="gap: 12px; margin-top: 22px">
+      <button
+        type="button"
+        class="syp-btn syp-btn--primary syp-btn--lg"
+        style="flex: 1"
+        [disabled]="!canSave()"
+        (click)="save()"
+      >
+        {{ saving() ? 'Saving…' : 'Save expense' }}
+      </button>
+      <button type="button" class="syp-btn syp-btn--quiet syp-btn--lg" (click)="discard()">
+        Discard
+      </button>
+    </div>
+  </div>
+</div>
+}

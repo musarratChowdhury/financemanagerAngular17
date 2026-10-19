@@ -1,65 +1,318 @@
-<div class="flex-col md:flex gap-4">
-  <div class="w-full bg-white p-4 card">
-    <div class="flex gap-2">
-      <select class="select select-secondary" (change)="onMonthChange($event)">
-        <option disabled selected value="">Pick a month</option>
-        <option value="1">January</option>
-        <option value="2">February</option>
-        <option value="3">March</option>
-        <option value="4">April</option>
-        <option value="5">May</option>
-        <option value="6">June</option>
-        <option value="7">July</option>
-        <option value="8">August</option>
-        <option value="9">September</option>
-        <option value="10">October</option>
-        <option value="11">November</option>
-        <option value="12">December</option>
-      </select>
-      <select
-        class="select select-secondary"
-        (change)="onYearChange($event)"
-        [value]="selectedYear ?? ''"
-      >
-        <option disabled selected value="">Select year</option>
-        <option *ngFor="let y of years" [value]="y">{{ y }}</option>
-      </select>
-    </div>
-    <ejs-accumulationchart
-      #piechart
-      id="chart-container"
-      [legendSettings]="legendSettings"
-      [tooltip]="tooltip"
-      (tooltipRender)="tooltipRender($event)"
-      [title]="title"
-    >
-      <e-accumulation-series-collection>
-        <e-accumulation-series
-          radius="70%"
-          [dataSource]="piedata"
-          [dataLabel]="datalabel"
-          xName="x"
-          yName="y"
-        ></e-accumulation-series>
-      </e-accumulation-series-collection>
-    </ejs-accumulationchart>
+<app-mobilebar [title]="greeting"></app-mobilebar>
+
+<!-- ============================ page head ============================ -->
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Overview</div>
+    <h1 class="syp-h1">{{ greeting }}</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      {{ snapshot()?.monthName }} {{ selectedYear() }} · here is where your
+      money went, and where it leaked.
+    </p>
   </div>
-  <div class="w-full bg-slate-50 p-4 card">
+
+  <div class="syp-head-actions">
+    <label class="syp-sr-only" for="dash-month">Month</label>
+    <select
+      id="dash-month"
+      class="syp-select"
+      [value]="selectedMonth()"
+      (change)="onMonthChange($any($event.target).value)"
+    >
+      @for (m of months; track m; let i = $index) {
+      <option [value]="i + 1">{{ m }}</option>
+      }
+    </select>
+
+    <label class="syp-sr-only" for="dash-year">Year</label>
+    <select
+      id="dash-year"
+      class="syp-select"
+      [value]="selectedYear()"
+      (change)="onYearChange($any($event.target).value)"
+    >
+      @for (y of years; track y) {
+      <option [value]="y">{{ y }}</option>
+      }
+    </select>
+
+    <a class="syp-btn syp-btn--ghost" routerLink="/expenses">Add expense</a>
+    <a class="syp-btn syp-btn--primary" routerLink="/scan-receipt">
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path
+          d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+        ></path>
+        <circle cx="12" cy="13" r="4"></circle>
+      </svg>
+      Scan receipt
+    </a>
+  </div>
+</div>
+
+@if (loading()) {
+<div class="syp-stack">
+  <div class="syp-skeleton" style="height: 168px"></div>
+  <div class="syp-skeleton" style="height: 120px"></div>
+  <div class="syp-skeleton" style="height: 220px"></div>
+</div>
+} @else if (failed()) {
+<div class="syp-card syp-card--pad">
+  <div class="syp-empty">
+    <div class="syp-empty__title">Could not reach your data</div>
+    <p class="syp-sub">
+      The finance API did not respond. Your figures will appear once the
+      connection is back.
+    </p>
+    <button type="button" class="syp-btn syp-btn--primary" (click)="load()">
+      Try again
+    </button>
+  </div>
+</div>
+} @else {
+<!-- ======================= hero + KPI cards ======================= -->
+
+<!-- Phone: one dark hero card with the spend split bar (mobile frame). -->
+<div class="syp-hero syp-only-mobile">
+  <div class="syp-hero__top">
+    <span>Spent in {{ snapshot()?.monthName }}</span>
+    <span class="syp-hero__badge">{{ selectedYear() }}</span>
+  </div>
+  <div class="syp-hero__value">{{ money(snapshot()?.expenses) }}</div>
+  <div
+    class="syp-hero__bar"
+    [style.background]="donutGradient()"
+    role="img"
+    [attr.aria-label]="'Spending split by category for ' + snapshot()?.monthName"
+  ></div>
+  <div class="syp-hero__foot">
+    <span>Income {{ money(snapshot()?.income) }}</span>
+    @if ((snapshot()?.balance ?? 0) >= 0) {
+    <span class="is-good">{{ money(snapshot()?.balance) }} left</span>
+    } @else {
+    <strong>{{ moneyNegative(snapshot()?.balance) }} over</strong>
+    }
+  </div>
+</div>
+
+<!-- Tablet and up: four KPI cards. -->
+<div class="syp-kpis syp-only-wide">
+  <div class="syp-kpi syp-kpi--ink">
+    <div class="syp-kpi-label">Spent in {{ snapshot()?.monthName }}</div>
+    <div class="syp-num">{{ money(snapshot()?.expenses) }}</div>
+    <div class="syp-kpi-foot">{{ spentFootnote() }}</div>
+  </div>
+
+  <div class="syp-kpi">
+    <div class="syp-kpi-label">Income</div>
+    <div class="syp-num">{{ money(snapshot()?.income) }}</div>
+    <div class="syp-kpi-foot">
+      @if ((snapshot()?.income ?? 0) > 0) { {{ balanceFootnote() }} } @else {
+      <a class="syp-link" routerLink="/cash-flow">Add this month's income</a>
+      }
+    </div>
+  </div>
+
+  <div class="syp-kpi" [class.syp-kpi--danger]="(snapshot()?.balance ?? 0) < 0">
+    <div class="syp-kpi-label">{{ balanceLabel() }}</div>
+    <div class="syp-num">{{ moneyNegative(snapshot()?.balance) }}</div>
+    <div class="syp-kpi-foot">{{ balanceFootnote() }}</div>
+  </div>
+
+  <div class="syp-kpi">
+    <div class="syp-kpi-label">Top category</div>
+    <div class="syp-num">{{ money(snapshot()?.topCategory?.totalAmount) }}</div>
+    <div class="syp-kpi-foot">{{ topCategoryFootnote() }}</div>
+  </div>
+</div>
+
+<!-- ======================= savings insights ======================= -->
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <h2 class="syp-h2">Where you can save</h2>
+    <span class="syp-pill syp-pill--lime">{{ insights().length }} found</span>
+  </div>
+
+  @if (!insights().length) {
+  <p class="syp-sub">
+    Nothing to flag this month — your spending is steady. Keep it up.
+  </p>
+  } @else { @for (insight of insights(); track insight.id) {
+  <div class="syp-insight">
+    <div
+      class="syp-insight__mark"
+      [class.syp-insight__mark--high]="insight.severity === 'high'"
+      [class.syp-insight__mark--medium]="insight.severity === 'medium'"
+      [class.syp-insight__mark--low]="insight.severity === 'low'"
+      aria-hidden="true"
+    >
+      {{ insight.severity === 'high' ? '!' : insight.severity === 'medium' ? '~' : '✓' }}
+    </div>
+    <div style="min-width: 0">
+      <div class="syp-insight__title">{{ insight.title }}</div>
+      <div class="syp-insight__detail">{{ insight.detail }}</div>
+      @if (insightSaveLabel(insight)) {
+      <div class="syp-insight__save">{{ insightSaveLabel(insight) }}</div>
+      }
+    </div>
+  </div>
+  } }
+</div>
+
+<!-- ======================= categories + months ======================= -->
+<div class="syp-grid syp-grid--20" style="margin-bottom: 16px">
+  <!-- Spending by category -->
+  <div class="syp-card syp-card--pad syp-col-420">
+    <h2 class="syp-h2" style="margin-bottom: 14px">Spending by category</h2>
+
+    @if (!pieData().length) {
+    <div class="syp-empty">
+      <div class="syp-empty__title">No spending recorded</div>
+      <p class="syp-sub">Add an expense to see the breakdown.</p>
+    </div>
+    } @else {
+    <div class="syp-donut-wrap">
+      <ejs-accumulationchart
+        id="category-chart"
+        [legendSettings]="pieLegend"
+        [tooltip]="pieTooltip"
+        [centerLabel]="pieCenterLabel()"
+        width="200px"
+        height="200px"
+      >
+        <e-accumulation-series-collection>
+          <e-accumulation-series
+            [dataSource]="pieData()"
+            xName="categoryName"
+            yName="totalAmount"
+            innerRadius="62%"
+            radius="100%"
+            [palettes]="piePalettes()"
+            [dataLabel]="pieDataLabel"
+          >
+          </e-accumulation-series>
+        </e-accumulation-series-collection>
+      </ejs-accumulationchart>
+
+      <div class="syp-legend">
+        @for (cat of pieData(); track cat.categoryId) {
+        <div class="syp-legend__row">
+          <span
+            class="syp-legend__swatch"
+            [style.background]="cat.color"
+            aria-hidden="true"
+          ></span>
+          <span class="syp-legend__name">{{ cat.categoryName }}</span>
+          <span class="syp-legend__amt">{{ money(cat.totalAmount) }}</span>
+          <span class="syp-legend__pct">{{ percent(cat.percent) }}</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
+
+  <!-- Year by month (Syncfusion column chart) -->
+  <div class="syp-card syp-card--pad syp-col-480">
+    <div class="syp-card-head">
+      <h2 class="syp-h2">{{ selectedYear() }} by month</h2>
+      <span class="syp-muted" style="font-size: 13px">Total spent</span>
+    </div>
+
     <ejs-chart
-      id="bar-chart-container"
+      id="month-chart"
       [primaryXAxis]="primaryXAxis"
       [primaryYAxis]="primaryYAxis"
-      [title]="barChartTitle"
+      [chartArea]="chartArea"
+      [tooltip]="tooltip"
+      (pointRender)="onBarPointRender($event)"
+      height="240px"
+      style="display: block; width: 100%"
     >
       <e-series-collection>
         <e-series
-          [dataSource]="barChartData"
+          [dataSource]="barData()"
           type="Column"
-          xName="x"
-          yName="y"
-          name="India"
+          xName="month"
+          yName="total"
+          [cornerRadius]="cornerRadius"
+          [marker]="markerSettings"
+          columnSpacing="0.28"
+          width="2"
         ></e-series>
       </e-series-collection>
     </ejs-chart>
+
+    <div class="syp-row" style="margin-top: 12px; font-size: 13px">
+      <span class="syp-muted">
+        Peak: <strong>{{ peakLabel() }}</strong>
+      </span>
+    </div>
   </div>
 </div>
+
+<!-- ======================= recent expenses ======================= -->
+<div class="syp-card syp-card--pad">
+  <div class="syp-card-head syp-card-head--tight">
+    <h2 class="syp-h2">Recent expenses</h2>
+    <a class="syp-link-quiet" routerLink="/expenses">View all</a>
+  </div>
+
+  @if (!recent().length) {
+  <div class="syp-empty">
+    <div class="syp-empty__title">Nothing recorded for this month</div>
+    <p class="syp-sub">Your latest expenses will appear here.</p>
+  </div>
+  } @else {
+  <!-- Phone: compact two-line rows. -->
+  <div class="syp-list syp-only-mobile">
+    @for (row of recent(); track row.id) {
+    <div class="syp-list__row">
+      <div class="syp-list__main">
+        <div class="syp-list__title">{{ row.title }}</div>
+        <div class="syp-list__meta">
+          {{ row.categoryName }} · {{ shortDate(row.date) }}
+        </div>
+      </div>
+      <div class="syp-list__amount">{{ money(row.amount) }}</div>
+    </div>
+    }
+  </div>
+
+  <!-- Tablet and up: full table. -->
+  <div class="syp-table-wrap syp-only-wide">
+    <table class="syp-table">
+      <thead>
+        <tr>
+          <th>Expense</th>
+          <th>Category</th>
+          <th>Date</th>
+          <th class="syp-right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of recent(); track row.id) {
+        <tr>
+          <td class="syp-table__title">{{ row.title }}</td>
+          <td><span class="syp-pill">{{ row.categoryName }}</span></td>
+          <td class="syp-muted">{{ shortDate(row.date) }}</td>
+          <td class="syp-right" style="font-weight: 600">
+            {{ money(row.amount) }}
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>
+}

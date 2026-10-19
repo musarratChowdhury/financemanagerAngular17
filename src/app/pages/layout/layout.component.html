@@ -1,11 +1,12 @@
-<app-navbar></app-navbar>
-<!-- Main Content -->
-<div class="mx-auto max-w-screen-lg">
-  <router-outlet></router-outlet>
+<div class="syp-shell">
+  <app-sidebar></app-sidebar>
+
+  <div class="syp-main">
+    <div class="syp-main-inner">
+      <router-outlet></router-outlet>
+    </div>
+    <div class="syp-foot">© MushCorps Ltd. All rights reserved.</div>
+  </div>
 </div>
-<!-- Footer -->
-<footer class="footer footer-center p-4 bg-base-300 text-base-content">
-  <aside>
-    <p>Copyright © 2024 - All right reserved by MushCorps Ltd</p>
-  </aside>
-</footer>
+
+<app-tabbar></app-tabbar>

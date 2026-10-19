@@ -4,10 +4,9 @@ import { LayoutComponent } from './pages/layout/layout.component';
 import { PageNotFoundComponent } from './pages/page-not-found/page-not-found.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { DashboardComponent } from './pages/layout/dashboard/dashboard.component';
-import { ExpenseCategoryComponent } from './pages/layout/expense-category/expense-category.component';
-import { ExpenseComponent } from './pages/layout/expense/expense.component';
-import { ExpenseTableComponent } from './pages/layout/expense/expense-table/expense-table.component';
-import { ReceiptComponent } from './pages/layout/receipt/receipt.component';
+import { CategoriesComponent } from './pages/layout/expense-category/categories.component';
+import { ExpensesComponent } from './pages/layout/expense/expenses.component';
+import { ScanReceiptComponent } from './pages/layout/receipt/scan-receipt.component';
 import { authGuard } from './auth.guard';
 import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
 import { CurrentNeedsComponent } from './pages/layout/current-needs/current-needs.component';
@@ -21,8 +20,13 @@ export const routes: Routes = [
   },
   {
     path: 'login',
-    title: 'Login Page',
+    title: 'Sign in · Save Your Penny',
     component: LoginComponent,
+  },
+  {
+    path: 'register',
+    title: 'Create account · Save Your Penny',
+    component: RegisterComponent,
   },
   {
     path: 'navbar',
@@ -30,51 +34,50 @@ export const routes: Routes = [
     component: NavbarComponent,
   },
   {
-    path: 'register',
-    title: 'Register Page',
-    component: RegisterComponent,
-  },
-  {
     path: '',
     component: LayoutComponent,
-    title: 'Layout',
     canActivate: [authGuard],
     children: [
       {
         path: 'dashboard',
-        title: 'Dashboard',
+        title: 'Dashboard · Save Your Penny',
         component: DashboardComponent,
       },
       {
-        path: 'expense-category',
-        title: 'Expense-Category',
-        component: ExpenseCategoryComponent,
+        path: 'expenses',
+        title: 'Expenses · Save Your Penny',
+        component: ExpensesComponent,
       },
       {
-        path: 'expense',
-        title: 'Expense',
-        component: ExpenseComponent,
+        path: 'categories',
+        title: 'Categories · Save Your Penny',
+        component: CategoriesComponent,
       },
       {
-        path: 'expense-table',
-        title: 'ExpenseTable',
-        component: ExpenseTableComponent,
-      },
-      {
-        path: 'receipt',
-        title: 'Receipt',
-        component: ReceiptComponent,
-      },
-      {
-        path: 'current-needs',
-        title: 'CurrentNeeds',
-        component: CurrentNeedsComponent,
+        path: 'scan-receipt',
+        title: 'Scan receipt · Save Your Penny',
+        component: ScanReceiptComponent,
       },
       {
         path: 'cash-flow',
-        title: 'Cash Flow',
+        title: 'Cash flow · Save Your Penny',
         component: CashFlowComponent,
       },
+      {
+        path: 'current-needs',
+        title: 'Current needs · Save Your Penny',
+        component: CurrentNeedsComponent,
+      },
+
+      // ---------------------------------------------------------------------
+      // Old URLs. The redesign merged the expense form, the expense table and
+      // the receipt builder into single screens, so these redirect rather than
+      // 404 on any bookmark or link that still points at them.
+      // ---------------------------------------------------------------------
+      { path: 'expense', redirectTo: 'expenses', pathMatch: 'full' },
+      { path: 'expense-table', redirectTo: 'expenses', pathMatch: 'full' },
+      { path: 'expense-category', redirectTo: 'categories', pathMatch: 'full' },
+      { path: 'receipt', redirectTo: 'scan-receipt', pathMatch: 'full' },
     ],
   },
 

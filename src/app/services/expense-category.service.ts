@@ -55,7 +55,7 @@ export class ExpenseCategoryService {
 
   // Handle errors
   private handleError(error: any): Observable<never> {
-    console.error('An error occurred:', error); // for demo purposes only
-    return error('Something bad happened; please try again later.');
+    console.error('Expense category request failed:', error);
+    throw error;
   }
 }

@@ -39,7 +39,7 @@ export class DashboardService {
   }
 
   private handleError(error: any): Observable<never> {
-    console.error('An error occurred:', error);
-    return error('Something bad happened; please try again later.');
+    console.error('Dashboard request failed:', error);
+    throw error;
   }
 }

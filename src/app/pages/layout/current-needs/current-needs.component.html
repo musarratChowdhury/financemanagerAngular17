@@ -1,1 +1,250 @@
-<p>current-needs works!</p>
+<app-mobilebar title="Current needs"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Savings first</div>
+    <h1 class="syp-h1">Current needs</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      What this month actually cost, what is leaking, and what you kept.
+    </p>
+  </div>
+
+  <div class="syp-head-actions">
+    <div class="syp-period">
+      <label class="syp-sr-only" for="cn-month">Month</label>
+      <select
+        id="cn-month"
+        class="syp-select"
+        [value]="selectedMonth()"
+        (change)="onMonth($any($event.target).value)"
+      >
+        @for (m of months; track m) {
+        <option [value]="m">{{ monthNames[m - 1] }}</option>
+        }
+      </select>
+
+      <label class="syp-sr-only" for="cn-year">Year</label>
+      <select
+        id="cn-year"
+        class="syp-select"
+        [value]="selectedYear()"
+        (change)="onYear($any($event.target).value)"
+      >
+        @for (y of years; track y) {
+        <option [value]="y">{{ y }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</div>
+
+@if (failed()) {
+<div class="syp-card syp-card--pad">
+  <div class="syp-empty">
+    <div class="syp-empty__title">Could not load this month</div>
+    <p class="syp-sub">The budget service did not respond.</p>
+    <button type="button" class="syp-btn syp-btn--primary" (click)="loadMonth()">
+      Try again
+    </button>
+  </div>
+</div>
+} @else {
+<!-- =========================== savings hero =========================== -->
+<div class="syp-card syp-card--pad cn-hero">
+  <div class="cn-hero__top">
+    <div>
+      <div class="syp-eyebrow">Saved in {{ monthLabel() }}</div>
+
+      @if (loading()) {
+      <div class="syp-skeleton" style="height: 44px; width: 180px; margin-top: 8px"></div>
+      } @else {
+      <div class="cn-hero__value">{{ moneyNegative(saved()) }}</div>
+      <div class="syp-sub" style="margin-top: 4px">
+        @if (!hasIncome()) { No income recorded, so nothing could be set aside. }
+        @else if (saved() <= 0) { Spending used the whole income this month. }
+        @else { {{ money(saved()) }} of {{ money(snapshot()?.income) }} income kept. }
+      </div>
+      }
+    </div>
+
+    @if (alertCount() > 0) {
+    <span class="syp-pill syp-pill--warn">{{ alertCount() }} to review</span>
+    } @else if (!loading()) {
+    <span class="syp-pill syp-pill--lime">On track</span>
+    }
+  </div>
+
+  <!-- ------------------------------ goal ------------------------------ -->
+  <div class="cn-goal">
+    <div class="cn-goal__head">
+      <div>
+        <div class="syp-eyebrow">Monthly savings goal</div>
+        @if (!editingGoal()) {
+        <div class="cn-goal__amount">
+          @if (goal() > 0) { {{ money(goal()) }} } @else { Not set }
+        </div>
+        }
+      </div>
+
+      @if (!editingGoal()) {
+      <button type="button" class="syp-btn syp-btn--sm syp-btn--quiet" (click)="startEditGoal()">
+        {{ goal() > 0 ? 'Change' : 'Set goal' }}
+      </button>
+      }
+    </div>
+
+    @if (editingGoal()) {
+    <div class="cn-goal__edit">
+      <label class="syp-sr-only" for="cn-goal">Monthly savings goal</label>
+      <input
+        id="cn-goal"
+        type="text"
+        inputmode="decimal"
+        class="syp-input"
+        placeholder="e.g. 10000"
+        [(ngModel)]="goalDraft"
+        (keyup.enter)="saveGoal()"
+      />
+      <button type="button" class="syp-btn syp-btn--primary" (click)="saveGoal()">
+        Save
+      </button>
+      <button type="button" class="syp-btn syp-btn--quiet" (click)="cancelEditGoal()">
+        Cancel
+      </button>
+    </div>
+    } @else if (goal() > 0) {
+    <div class="cn-goal__bar" role="progressbar" [attr.aria-valuenow]="goalProgress()" aria-valuemin="0" aria-valuemax="100">
+      <div
+        class="cn-goal__fill"
+        [class.is-met]="goalReached()"
+        [style.width.%]="goalProgress()"
+      ></div>
+    </div>
+    <div class="cn-goal__foot">
+      @if (goalReached()) {
+      <span class="syp-hl-good">Goal reached — {{ money(saved()) }} saved.</span>
+      } @else {
+      <span>{{ money(goalRemaining()) }} to go</span>
+      <span class="syp-muted">{{ percent(goalProgress()) }}</span>
+      }
+    </div>
+    } @else {
+    <p class="syp-sub" style="margin: 8px 0 0">
+      Set a target and this page will track whether the month actually delivered
+      it — not just whether you stayed under budget.
+    </p>
+    }
+  </div>
+</div>
+
+<!-- ========================== recoverable ========================== -->
+@if (!loading() && insights().length) {
+<div class="syp-card syp-card--pad" style="margin-top: 16px">
+  <div class="syp-card-head syp-card-head--tight">
+    <div>
+      <div class="syp-h2">Where you can save</div>
+      <div class="syp-sub" style="font-size: 13px">
+        Based on {{ monthLabel() }}'s recorded spending.
+      </div>
+    </div>
+    @if (potentialSaving() > 0) {
+    <div class="cn-saving">
+      <div class="cn-saving__label">Recoverable</div>
+      <div class="cn-saving__value">{{ money(potentialSaving()) }}</div>
+    </div>
+    }
+  </div>
+
+  @for (insight of insights(); track insight.id) {
+  <div class="syp-insight">
+    <div
+      class="syp-insight__mark"
+      [class.syp-insight__mark--high]="insight.severity === 'high'"
+      [class.syp-insight__mark--medium]="insight.severity === 'medium'"
+      [class.syp-insight__mark--low]="insight.severity === 'low'"
+      aria-hidden="true"
+    >
+      {{ marker(insight) }}
+    </div>
+
+    <div class="syp-insight__body">
+      <div class="syp-insight__title">{{ insight.title }}</div>
+      <div class="syp-insight__detail">{{ insight.detail }}</div>
+    </div>
+
+    @if (insight.saving) {
+    <div class="syp-insight__save">+{{ money(insight.saving) }}</div>
+    }
+  </div>
+  }
+</div>
+}
+
+<!-- ============================ needs list ============================ -->
+<div class="syp-card syp-card--flush" style="margin-top: 16px">
+  <div class="syp-card-head">
+    <div>
+      <div class="syp-h2">What the money went on</div>
+      <div class="syp-sub" style="font-size: 13px">
+        Every category for {{ monthLabel() }}, largest first.
+      </div>
+    </div>
+    @if (topCategory()) {
+    <div class="cn-top">
+      <div class="cn-top__label">Biggest</div>
+      <div class="cn-top__value">{{ topCategory()!.categoryName }}</div>
+      <div class="cn-top__pct">{{ percent(topCategory()!.percent, 0) }}</div>
+    </div>
+    }
+  </div>
+
+  @if (loading()) {
+  <div style="padding: 16px">
+    @for (n of [0, 1, 2, 3, 4]; track n) {
+    <div class="syp-skeleton" style="height: 48px; margin-bottom: 8px"></div>
+    }
+  </div>
+  } @else if (!needs().length) {
+  <div class="syp-empty">
+    <div class="syp-empty__title">Nothing recorded for {{ monthLabel() }}</div>
+    <p class="syp-sub">
+      Add an expense and this list fills in with what each need is costing you.
+    </p>
+    <a class="syp-btn syp-btn--primary" routerLink="/expenses">Add expense</a>
+  </div>
+  } @else {
+  <div class="syp-list cn-needs">
+    @for (cat of needs(); track cat.categoryId) {
+    <div class="syp-list__row">
+      <span
+        class="cn-needs__dot"
+        [style.background]="cat.color"
+        aria-hidden="true"
+      ></span>
+
+      <div class="syp-list__main">
+        <div class="syp-list__title">{{ cat.categoryName }}</div>
+        <div class="cn-needs__track" aria-hidden="true">
+          <div
+            class="cn-needs__fill"
+            [style.width.%]="cat.percent"
+            [style.background]="cat.color"
+          ></div>
+        </div>
+      </div>
+
+      <div class="cn-needs__figures">
+        <div class="syp-list__amount">{{ money(cat.totalAmount) }}</div>
+        <div class="syp-muted cn-needs__pct">{{ percent(cat.percent, 0) }}</div>
+      </div>
+    </div>
+    }
+  </div>
+
+  <div class="syp-table-foot">
+    <div>{{ needs().length }} categories</div>
+    <div>{{ money(snapshot()?.expenses) }} total</div>
+  </div>
+  }
+</div>
+}

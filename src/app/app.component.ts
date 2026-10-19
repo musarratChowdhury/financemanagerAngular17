@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { ConnectivityService } from './services/connectivity.service';
 
 @Component({
   selector: 'app-root',
@@ -11,4 +12,7 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'financemanager';
+
+  // Injected so its online/offline listeners are registered for the app's lifetime.
+  constructor(public readonly connectivity: ConnectivityService) {}
 }

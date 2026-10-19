@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+/* Toolbar strip above the ledger: search + category filter. */
+.syp-ledger-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--syp-border);
+}
+
+.syp-ledger-tools > .syp-input {
+  flex: 1 1 180px;
+  min-width: 0;
+  height: 44px;
+  font-size: 15px;
+}
+
+.syp-ledger-tools > .syp-select {
+  flex: 1 1 140px;
+  min-width: 0;
+  height: 44px;
+  font-size: 15px;
+}
+
+/* Rows sit inside a card that is already padded on desktop. */
+.syp-ledger-pad {
+  padding: 0 16px;
+}
+
+@media (min-width: 640px) {
+  .syp-ledger-tools {
+    padding: 18px 24px;
+    gap: 12px;
+  }
+
+  .syp-ledger-tools > .syp-input {
+    flex: 1 1 200px;
+  }
+
+  .syp-ledger-tools > .syp-select {
+    flex: 0 0 auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .syp-ledger-pad {
+    padding: 0 24px;
+  }
+}
