@@ -28,6 +28,9 @@ test('Add expense enables once the form is filled and saves successfully', async
   const title = `E2E Test Expense ${Date.now()}`;
 
   page.on('pageerror', (e) => console.log('PAGE ERROR:', e.message));
+  page.on('response', (r) => {
+    if (r.status() >= 400) console.log('HTTP', r.status(), r.url());
+  });
 
   // ---------------------------------------------------------------- login
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -81,18 +84,23 @@ test('Add expense enables once the form is filled and saves successfully', async
   // ----------------------------------------------------------- clean up
   const token = await page.evaluate(() => {
     const raw = localStorage.getItem('auth-user');
-    return raw ? (JSON.parse(raw).token ?? null) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // StorageService.saveUser() is called with the token itself, so the stored
+    // value is a JSON string; older payloads were a JSON object.
+    return typeof parsed === 'string' ? parsed : (parsed.token ?? null);
   });
+  console.log('token for cleanup:', token ? 'found' : 'MISSING');
   if (token) {
     const all = await request.get(`${API}/api/Expense/GetAll`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const created = (await all.json()).find((e: any) => e.cause === title);
     if (created) {
-      await request.delete(`${API}/api/Expense/Delete/${created.id}`, {
+      const del = await request.delete(`${API}/api/Expense/Delete/${created.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log(`cleaned up expense ${created.id}`);
+      console.log(`cleaned up expense ${created.id} -> ${del.status()}`);
     }
   }
 });
