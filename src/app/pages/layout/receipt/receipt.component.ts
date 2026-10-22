@@ -6,7 +6,6 @@ import {
   Validators,
 } from '@angular/forms';
 
-import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ExpenseCategory } from '../../../../models/ExpenseCategory';
 import { Expense } from '../../../../models/Expense';
@@ -36,7 +35,6 @@ import { Router } from '@angular/router';
   imports: [
     FormsModule,
     ReactiveFormsModule,
-    DropDownListModule,
     ToastModule,
     GridModule,
     TextBoxModule,
@@ -86,13 +84,6 @@ export class ReceiptComponent implements OnInit {
     expenseDate: ['', Validators.required],
     expenseCategory: ['', Validators.required],
   });
-
-  // maps the appropriate column to fields property
-  public fields: Object = { text: 'name', value: 'id' };
-  // set the height of the popup element
-  public height: string = '220px';
-  // set the placeholder to DropDownList input element
-  public waterMark: string = 'Select an Expense Category';
 
   onExpenseSubmit() {
     console.log(this.expenseForm.value);

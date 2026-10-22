@@ -3,14 +3,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
-import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ReceiptScannerService } from '../../../services/receipt-scanner.service';
 import { parseReceiptText } from '../../../_helpers/receipt-parser';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
-import { money, moneyExact, isoDate, longDate } from '../../../_helpers/money';
+import { money, moneyExact, isoUtcDate, longDate } from '../../../_helpers/money';
 
 interface CategoryOption {
   id: number;
@@ -42,7 +41,6 @@ interface LineItem {
     CommonModule,
     FormsModule,
     DatePickerModule,
-    DropDownListModule,
     NumericTextBoxModule,
     MobileBarComponent,
   ],
@@ -318,7 +316,7 @@ export class ScanReceiptComponent implements OnInit {
     this.saveError.set('');
 
     const categoryId = this.categoryId!;
-    const expenseDate = isoDate(this.date);
+    const expenseDate = isoUtcDate(this.date);
     const items = this.items().filter((i) => i.name.trim().length > 0);
 
     // One expense per line item keeps the ledger meaningful; with no line items

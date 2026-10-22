@@ -42,3 +42,12 @@ testem.log
 Thumbs.db
 .vercel
 .env*
+
+# Playwright
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache
+
+# Local scratch (contains dev credentials)
+/login.json

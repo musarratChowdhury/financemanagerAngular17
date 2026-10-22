@@ -8,7 +8,6 @@ import {
 import { DateTimePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { TextBoxModule } from '@syncfusion/ej2-angular-inputs';
-import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ExpenseCategory } from '../../../../models/ExpenseCategory';
@@ -24,7 +23,6 @@ import { Router } from '@angular/router';
     DateTimePickerModule,
     NumericTextBoxModule,
     TextBoxModule,
-    DropDownListModule,
   ],
   templateUrl: './expense.component.html',
   styleUrl: './expense.component.css',
@@ -56,16 +54,6 @@ export class ExpenseComponent implements OnInit {
     expenseDate: ['', Validators.required],
     expenseCategory: ['', Validators.required],
   });
-
-  // maps the appropriate column to fields property
-  public fields: Object = { text: 'name', value: 'id' };
-  // set the height of the popup element
-  public height: string = '220px';
-  // set the placeholder to DropDownList input element
-  public waterMark: string = 'Select an Expense Category';
-  // set the value to select an item based on mapped value at initial rendering
-  public value: string = 'Game3';
-  public onChange(args: any): void {}
 
   onSubmit() {
     console.log(this.expenseForm.value);

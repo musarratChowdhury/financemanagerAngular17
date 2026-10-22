@@ -6,7 +6,6 @@ import {
   DatePickerModule,
   DatePickerComponent,
 } from '@syncfusion/ej2-angular-calendars';
-import { DropDownListModule } from '@syncfusion/ej2-angular-dropdowns';
 import { GridModule, PageService } from '@syncfusion/ej2-angular-grids';
 import {
   NumericTextBoxModule,
@@ -18,7 +17,7 @@ import { ExpenseCategoryService } from '../../../services/expense-category.servi
 import { BudgetService } from '../../../services/budget.service';
 import { ExpenseRow } from '../../../../models/Budget';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
-import { money, shortDate, isoDate, percent } from '../../../_helpers/money';
+import { money, shortDate, isoUtcDate, percent } from '../../../_helpers/money';
 
 interface CategoryOption {
   id: number;
@@ -40,7 +39,6 @@ interface CategoryOption {
     FormsModule,
     RouterLink,
     DatePickerModule,
-    DropDownListModule,
     GridModule,
     TextBoxModule,
     NumericTextBoxModule,
@@ -252,7 +250,7 @@ export class ExpensesComponent implements OnInit {
       amount: this.computedAmount,
       quantity: this.quantity ?? 1,
       unitPrice: this.unitPrice ?? this.computedAmount,
-      expenseDate: isoDate(this.date),
+      expenseDate: isoUtcDate(this.date),
       expenseCategoryId: this.categoryId,
     };
 

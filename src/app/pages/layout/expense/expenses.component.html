@@ -94,14 +94,17 @@
 
     <div class="syp-field">
       <label class="syp-label" for="ex-cat">Category</label>
-      <ejs-dropdownlist
+      <select
         id="ex-cat"
-        [dataSource]="categories()"
-        [fields]="{ text: 'name', value: 'id' }"
-        placeholder="Select a category"
+        class="syp-select"
+        style="width: 100%"
         [(ngModel)]="categoryId"
-        width="100%"
-      ></ejs-dropdownlist>
+      >
+        <option [ngValue]="null">Select a category</option>
+        @for (cat of categories(); track cat.id) {
+          <option [ngValue]="cat.id">{{ cat.name }}</option>
+        }
+      </select>
     </div>
 
     <div class="syp-split" style="margin-bottom: 14px">

@@ -50,15 +50,16 @@
           ></ejs-datetimepicker>
         </div>
         <div class="col-span-1">
-          <ejs-dropdownlist
-            floatLabelType="Auto"
+          <select
+            id="expense-category"
+            class="select select-bordered w-full"
             formControlName="expenseCategory"
-            id="games"
-            [dataSource]="expenseCategoryList"
-            [fields]="fields"
-            [placeholder]="waterMark"
-            [popupHeight]="height"
-          ></ejs-dropdownlist>
+          >
+            <option value="">Select an Expense Category</option>
+            @for (cat of expenseCategoryList; track cat.id) {
+              <option [value]="cat.id">{{ cat.name }}</option>
+            }
+          </select>
         </div>
       </div>
       <button

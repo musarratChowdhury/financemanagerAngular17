@@ -70,6 +70,20 @@ export function isoDate(value: Date | string | null | undefined): string {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
+/**
+ * `yyyy-MM-ddT00:00:00.000Z` — the wire format for a calendar date.
+ *
+ * A bare `yyyy-MM-dd` is rejected by the API: it deserialises to a DateTime with
+ * Kind=Unspecified, and Npgsql refuses to write that into a `timestamp with
+ * time zone` column, so the insert fails with a 500. Pinning the date to UTC
+ * midnight keeps the stored calendar day the same while giving the server an
+ * unambiguous instant.
+ */
+export function isoUtcDate(value: Date | string | null | undefined): string {
+  const day = isoDate(value);
+  return day ? `${day}T00:00:00.000Z` : '';
+}
+
 /** Greeting used by the dashboard headline. */
 export function greeting(now = new Date()): string {
   const h = now.getHours();
