@@ -90,14 +90,20 @@ export class ScanReceiptComponent implements OnInit {
     this.items().reduce((sum, item) => sum + (item.amount ?? 0), 0)
   );
 
-  readonly itemsMatchTotal = computed(() => {
+  /**
+   * Getters rather than computed() signals where the logic reads plain form
+   * fields (shop / total / categoryId): a computed only re-evaluates when a
+   * signal it read changes, so those results would go stale forever after
+   * their first evaluation with empty fields.
+   */
+  get itemsMatchTotal(): boolean {
     const total = this.total ?? 0;
     if (!this.items().length || total <= 0) return true;
     return Math.abs(this.itemsTotal() - total) < 0.01;
-  });
+  }
 
   /** The category whose name best matches the shop text, if any. */
-  readonly suggestedCategoryId = computed(() => {
+  get suggestedCategoryId(): number | null {
     const haystack = this.shop.trim().toLowerCase();
     if (!haystack) return null;
     const hit = this.categories().find((c) => {
@@ -105,17 +111,18 @@ export class ScanReceiptComponent implements OnInit {
       return haystack.includes(name) || name.includes(haystack);
     });
     return hit?.id ?? null;
-  });
+  }
 
   readonly canReview = computed(() => this.fileName().length > 0);
 
-  readonly canSave = computed(
-    () =>
+  get canSave(): boolean {
+    return (
       this.shop.trim().length > 0 &&
       this.categoryId != null &&
       (this.total ?? 0) > 0 &&
       !this.saving()
-  );
+    );
+  }
 
   constructor(
     private expenseService: ExpenseService,
@@ -274,7 +281,7 @@ export class ScanReceiptComponent implements OnInit {
   }
 
   applySuggestion(): void {
-    const id = this.suggestedCategoryId();
+    const id = this.suggestedCategoryId;
     if (id != null) this.categoryId = id;
   }
 
@@ -305,7 +312,7 @@ export class ScanReceiptComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canSave()) return;
+    if (!this.canSave) return;
 
     this.saving.set(true);
     this.saveError.set('');

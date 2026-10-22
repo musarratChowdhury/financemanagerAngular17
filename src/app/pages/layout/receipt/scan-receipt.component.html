@@ -251,7 +251,7 @@
     <div class="syp-field">
       <label class="syp-label" for="sr-cat">
         <span>Category</span>
-        @if (suggestedCategoryId() !== null) {
+        @if (suggestedCategoryId !== null) {
         <button
           type="button"
           class="syp-label__hint syp-suggest"
@@ -367,7 +367,7 @@
 
     <div
       class="syp-notice"
-      [class.syp-notice--good]="itemsMatchTotal()"
+      [class.syp-notice--good]="itemsMatchTotal"
       style="margin-top: 14px"
     >
       <svg
@@ -381,7 +381,7 @@
         stroke-linejoin="round"
         aria-hidden="true"
       >
-        @if (itemsMatchTotal()) {
+        @if (itemsMatchTotal) {
         <path d="M20 6L9 17l-5-5"></path>
         } @else {
         <circle cx="12" cy="12" r="10"></circle>
@@ -389,7 +389,7 @@
         }
       </svg>
       <span>
-        @if (itemsMatchTotal()) { Items add up to {{ money(itemsTotal()) }},
+        @if (itemsMatchTotal) { Items add up to {{ money(itemsTotal()) }},
         matching the receipt total. } @else { Items add up to {{
         money(itemsTotal()) }} but the total says {{ money(total) }}. }
       </span>
@@ -401,7 +401,7 @@
         type="button"
         class="syp-btn syp-btn--primary syp-btn--lg"
         style="flex: 1"
-        [disabled]="!canSave()"
+        [disabled]="!canSave"
         (click)="save()"
       >
         {{ saving() ? 'Saving…' : 'Save expense' }}

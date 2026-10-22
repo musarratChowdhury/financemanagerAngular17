@@ -108,21 +108,27 @@ export class ExpensesComponent implements OnInit {
     () => this.filtered().filter((r) => r.scanned).length
   );
 
-  /** Total recalculated live as quantity or unit price changes. */
-  readonly computedAmount = computed(() => {
+  /**
+   * Getters rather than computed() signals: these read plain form fields,
+   * which never mark a computed dirty — a computed would cache its initial
+   * result forever and keep the Add button disabled even with everything
+   * filled in. With default change detection these re-evaluate on each CD cycle.
+   */
+  get computedAmount(): number {
     if (this.amount != null && this.amount > 0) return this.amount;
     const q = this.quantity ?? 0;
     const u = this.unitPrice ?? 0;
     return q > 0 && u > 0 ? q * u : 0;
-  });
+  }
 
-  readonly canSave = computed(
-    () =>
+  get canSave(): boolean {
+    return (
       this.title.trim().length > 0 &&
       this.categoryId != null &&
-      this.computedAmount() > 0 &&
+      this.computedAmount > 0 &&
       !this.saving()
-  );
+    );
+  }
 
   constructor(
     private expenseService: ExpenseService,
@@ -237,15 +243,15 @@ export class ExpensesComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canSave()) return;
+    if (!this.canSave) return;
 
     this.saving.set(true);
 
     const payload = {
       cause: this.title.trim(),
-      amount: this.computedAmount(),
+      amount: this.computedAmount,
       quantity: this.quantity ?? 1,
-      unitPrice: this.unitPrice ?? this.computedAmount(),
+      unitPrice: this.unitPrice ?? this.computedAmount,
       expenseDate: isoDate(this.date),
       expenseCategoryId: this.categoryId,
     };

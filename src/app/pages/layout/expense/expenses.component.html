@@ -158,7 +158,7 @@
         type="button"
         class="syp-btn syp-btn--primary"
         style="flex: 1"
-        [disabled]="!canSave()"
+        [disabled]="!canSave"
         (click)="save()"
       >
         {{ saving() ? 'Saving…' : 'Add expense' }}
