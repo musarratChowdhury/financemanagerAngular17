@@ -56,7 +56,16 @@ an Unspecified date server-side, but the client should still send a UTC value.
 
 - **Web**: pushing to `main` runs `.github/workflows/ci.yml` (build + audit + karma tests) — it has **no deploy step**. The site is deployed by Vercel's GitHub integration on push. A green CI run does not mean the site is updated; verify by fetching the site's `index.html` and comparing the `main-<hash>.js` filename, then re-fetch the bundle and grep it for your change.
 - **API**: pushing to `main` in `../FinanceManagerApi` runs `CI/CD` — build, test, push the Docker image, apply EF migrations to CockroachDB, then notify Render. It has been failing often enough that a stale image on Docker Hub is normal; check the run before assuming a change is live.
-- Production hosts: web `https://financemanager.muhit.dev`, API `https://fmapi.muhit.dev`. The API talks to a CockroachDB Cloud cluster (`weird-gorilla-7085.8nk.gcp-asia-southeast1.cockroachlabs.cloud:26257`, db `financedb`, user `musarrat`) — the password lives in the API repo's user-secrets / `FinanceManagerApi/CockroachConnect.txt`, never in this repo.
+- Production hosts: web `https://financemanager.muhit.dev`, API `https://fmapi.muhit.dev`. The API talks to a CockroachDB Cloud cluster (`weird-gorilla-7085.8nk.gcp-asia-southeast1.cockroachlabs.cloud:26257`, db `financedb`, user `musarrat`) — the password lives in the API repo, never in this repo. Note the API repo's `FinanceManagerApi/CockroachConnect.txt` holds a **stale** password; use the API repo's `scripts/check-sequence.py` / `scripts/probe-api.py`, which try several sources and pick the one that authenticates.
+
+## Project scripts (`scripts/`) — reuse these, don't recreate them
+
+- **`scripts/verify-deployed.py`** — what is actually live on the site. Prints the deploy time and the content-hashed bundle name, then checks markers inside it:
+  ```
+  python scripts/verify-deployed.py --grep "get canSave(){return this.title.trim().length>0" --not-grep "ejs-dropdownlist"
+  ```
+  `--grep` = must be present, `--not-grep` = must be absent (for removed code). Use this instead of hand-fetching `index.html` and grepping the bundle.
+- The Playwright specs live in `e2e/` — see "E2E conventions" below.
 
 ## Project skills (`.opencode/skills/`)
 
