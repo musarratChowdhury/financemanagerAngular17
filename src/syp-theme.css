@@ -1436,6 +1436,13 @@ button {
   color: var(--syp-ink-2);
 }
 
+.syp-preview__note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--syp-ink-3);
+}
+
 /* --------------------------------------------------------- progress / flows */
 
 .syp-flow {

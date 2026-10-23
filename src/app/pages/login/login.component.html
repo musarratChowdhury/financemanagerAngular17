@@ -13,16 +13,16 @@
         spot the waste that quietly drains your month.
       </p>
 
-      <!-- savings preview card -->
+      <!-- savings preview card — sample data only, never a real ledger -->
       <div class="syp-preview">
         <div class="syp-preview__head">
-          <span>This month</span>
+          <span>{{ preview.label }}</span>
           <span>Spent</span>
         </div>
-        <div class="syp-preview__value">₨46,657</div>
+        <div class="syp-preview__value">{{ previewTotal }}</div>
 
         <div class="syp-preview__bar" aria-hidden="true">
-          @for (seg of previewSegments; track $index) {
+          @for (seg of preview.segments; track $index) {
           <span
             [style.background]="seg.color"
             [style.width.%]="seg.width"
@@ -32,10 +32,14 @@
         </div>
 
         <div class="syp-preview__legend">
-          <span>Baby &amp; Wife 39%</span>
-          <span>Bills 35%</span>
-          <span>Medicines 13%</span>
+          @for (item of preview.legend; track item.label) {
+          <span>{{ item.label }} {{ item.percent }}%</span>
+          }
         </div>
+
+        <p class="syp-preview__note">
+          Sample data — your own numbers appear once you sign in.
+        </p>
       </div>
     </div>
 

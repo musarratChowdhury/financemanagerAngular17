@@ -7,7 +7,6 @@ import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ReceiptScannerService } from '../../../services/receipt-scanner.service';
-import { parseReceiptText } from '../../../_helpers/receipt-parser';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import { money, moneyExact, isoUtcDate, longDate } from '../../../_helpers/money';
 
@@ -30,9 +29,8 @@ interface LineItem {
  * Mobile-first: one column, stepper scrolls horizontally if it must. From
  * 1024px the receipt preview and the review form sit side by side.
  *
- * NOTE ON OCR: the API exposes no receipt-parsing endpoint, so nothing is read
- * automatically. OCR runs locally in the browser and only prefills the review
- * form; saving always remains an explicit user action.
+ * Receipt data is read by the API and only prefills the review form; saving
+ * always remains an explicit user action.
  */
 @Component({
   selector: 'app-scan-receipt',
@@ -187,37 +185,42 @@ export class ScanReceiptComponent implements OnInit {
     );
     this.step.set(2);
 
-    if (file.type.startsWith('image/')) {
-      void this.scanReceipt(file);
-    } else {
-      this.ocrStatus.set('unsupported');
-      this.ocrMessage.set('OCR is available for receipt images, not PDF files.');
-    }
+    void this.scanReceipt(file);
   }
 
   private async scanReceipt(file: File): Promise<void> {
     this.ocrStatus.set('scanning');
     this.ocrProgress.set(0);
-    this.ocrMessage.set('Reading receipt locally…');
+    this.ocrMessage.set('Reading receipt…');
 
     try {
-      const text = await this.receiptScanner.recognize(file, (progress) => {
-        this.ocrProgress.set(progress.progress);
-        this.ocrMessage.set(progress.status || 'Reading receipt locally…');
-      });
-      const parsed = parseReceiptText(text);
+      const parsed = await this.receiptScanner.recognize(file);
       if (parsed.merchant) this.shop = parsed.merchant;
-      if (parsed.date) this.date = parsed.date;
-      if (parsed.amount) this.total = parsed.amount;
+      if (parsed.date) {
+        const date = new Date(parsed.date);
+        if (!Number.isNaN(date.getTime())) this.date = date;
+      }
+      if (parsed.total != null) this.total = parsed.total;
+      this.items.set(
+        (parsed.items ?? []).map((item) => ({
+          key: this.nextKey++,
+          name: item.name,
+          qty: item.quantity,
+          unitPrice: item.unitPrice,
+          amount: item.amount,
+        }))
+      );
+      this.ocrProgress.set(1);
       this.ocrStatus.set('done');
       this.ocrMessage.set(
-        parsed.confidence === 'low'
-          ? 'Receipt read with low confidence. Please check every field.'
-          : `Receipt read with ${parsed.confidence} confidence. Please review the fields.`
+        parsed.needsReview
+          ? 'Receipt read. Please check the highlighted totals and every field.'
+          : 'Receipt read. Please review the fields before saving.'
       );
-    } catch {
+    } catch (error) {
+      console.error('Receipt scan failed:', error);
       this.ocrStatus.set('error');
-      this.ocrMessage.set('Could not read this image. Please enter the details manually.');
+      this.ocrMessage.set('Could not read this receipt. Please enter the details manually.');
     }
   }
 

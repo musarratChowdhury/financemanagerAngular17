@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { LoginModel } from '../../../models/loginModel';
+import { money } from '../../_helpers/money';
 import { AuthService } from '../../services/auth.service';
 import { StorageService } from '../../services/storage.service';
 
@@ -26,18 +27,34 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   keepSignedIn = true;
 
-  /** Sample split for the preview card; replaced by real data once signed in. */
-  readonly previewSegments = [
-    { color: '#111111', width: 39.5 },
-    { color: '#A6CF1D', width: 34.66 },
-    { color: '#2F6FED', width: 12.52 },
-    { color: '#E5539B', width: 5.74 },
-    { color: '#8E6CD1', width: 3.64 },
-    { color: '#F59E0B', width: 1.78 },
-    { color: '#14B8A6', width: 0.86 },
-    { color: '#8A8A83', width: 0.86 },
-    { color: '#0EA5E9', width: 0.44 },
-  ];
+  /**
+   * Marketing illustration for the sign-in panel.
+   *
+   * The login page is public, so it must never carry a real ledger: no actual
+   * spend total, no real category names. Everything below is a fabricated
+   * sample with round numbers, and the card is labelled as an example so no
+   * visitor can mistake it for their own data. The real figures live behind
+   * `authGuard`, on the dashboard.
+   */
+  readonly preview = {
+    label: 'Example month',
+    total: 12480,
+    segments: [
+      { color: '#111111', width: 38 },
+      { color: '#A6CF1D', width: 27 },
+      { color: '#2F6FED', width: 16 },
+      { color: '#E5539B', width: 11 },
+      { color: '#8E6CD1', width: 8 },
+    ],
+    legend: [
+      { label: 'Groceries', percent: 38 },
+      { label: 'Bills', percent: 27 },
+      { label: 'Transport', percent: 16 },
+    ],
+  };
+
+  /** Formatted sample total, e.g. `₨12,480`. */
+  readonly previewTotal = money(this.preview.total);
 
   constructor(
     private authService: AuthService,

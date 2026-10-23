@@ -52,6 +52,13 @@ export function offlineInterceptor(
 
   const isMutation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method);
   const isGet = req.method === 'GET';
+  const isReceiptScan = req.url.includes('/Receipt/Scan');
+
+  // Multipart receipt images cannot be safely serialized and replayed by the
+  // offline store, so let the request fail normally when it cannot reach API.
+  if (isReceiptScan) {
+    return next(req);
+  }
 
   // Initialize IndexedDB (idempotent) - returns a promise, convert to observable
   const init$ = from(offlineStore.init().catch((err) => {

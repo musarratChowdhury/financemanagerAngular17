@@ -17,7 +17,7 @@ const decimalFormat = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 });
 
-/** `₨46,657` — no decimals, matching the design's headline figures. */
+/** `₨12,480` — no decimals, matching the design's headline figures. */
 export function money(value: number | null | undefined): string {
   const n = Number(value);
   if (!isFinite(n)) return `${CURRENCY_SYMBOL}0`;
@@ -31,7 +31,7 @@ export function moneyExact(value: number | null | undefined): string {
   return `${CURRENCY_SYMBOL}${decimalFormat.format(n)}`;
 }
 
-/** `−₨46,657` — the design marks overspend with a true minus sign. */
+/** `−₨12,480` — the design marks overspend with a true minus sign. */
 export function moneyNegative(value: number | null | undefined): string {
   const n = Number(value) || 0;
   return `${n < 0 ? '−' : ''}${money(Math.abs(n))}`;
