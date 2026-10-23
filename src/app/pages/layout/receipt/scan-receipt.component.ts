@@ -220,7 +220,11 @@ export class ScanReceiptComponent implements OnInit {
     } catch (error) {
       console.error('Receipt scan failed:', error);
       this.ocrStatus.set('error');
-      this.ocrMessage.set('Could not read this receipt. Please enter the details manually.');
+      this.ocrMessage.set(
+        error instanceof Error && error.message
+          ? `${error.message} Please enter the details manually.`
+          : 'Could not read this receipt. Please enter the details manually.'
+      );
     }
   }
 
