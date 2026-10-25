@@ -345,6 +345,25 @@ button {
   white-space: nowrap;
 }
 
+/*
+ * Gemini's raw error body. Dark panel on purpose: it is evidence, not chrome,
+ * and the settings screen and the scan screen both show it verbatim.
+ */
+.syp-raw {
+  margin: 8px 0 0;
+  padding: 12px;
+  border-radius: var(--syp-r);
+  background: var(--syp-sidebar);
+  color: #e6e6e1;
+  font-family: var(--syp-font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  max-height: 280px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 /* --------------------------------------------------------------- page head */
 
 .syp-page-head {

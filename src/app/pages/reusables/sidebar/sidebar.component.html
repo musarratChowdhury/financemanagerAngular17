@@ -49,9 +49,12 @@
     </div>
     <div style="min-width: 0">
       <div class="syp-account__name">My account</div>
-      <button type="button" class="syp-account__action" (click)="signOut()">
-        Sign out
-      </button>
+      <div class="syp-account__actions">
+        <a class="syp-account__action syp-account__link" routerLink="/settings">Settings</a>
+        <button type="button" class="syp-account__action" (click)="signOut()">
+          Sign out
+        </button>
+      </div>
     </div>
   </div>
 </aside>

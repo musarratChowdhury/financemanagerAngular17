@@ -1,0 +1,295 @@
+<app-mobilebar title="Settings"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Receipt scanning</div>
+    <h1 class="syp-h1">Settings</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      Pick the Gemini model that reads your receipts, test it on a receipt, then save it.
+    </p>
+  </div>
+  <div class="syp-head-actions">
+    <button
+      class="syp-btn syp-btn--quiet"
+      type="button"
+      (click)="recheck()"
+      [disabled]="sweep().status === 'running'"
+    >
+      {{ sweep().status === 'running' ? 'Checking…' : 'Re-check availability' }}
+    </button>
+  </div>
+</div>
+
+<!-- availability sweep -->
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <div>
+      <div class="syp-h2">Availability</div>
+      <div class="syp-sub" style="font-size: 13px">
+        @if (sweep().status === 'running') {
+          Testing every callable model against the sample receipt…
+        } @else if (sweep().status === 'done') {
+          @if (sweep().winner) {
+            Read the sample with <strong>{{ sweep().winner }}</strong>.
+          } @else {
+            No model could read the sample just now — try again in a few minutes.
+          }
+          @if (sweep().at; as at) {
+            Checked {{ timeOf(at) }}.
+          }
+          @if (sweep().cached) {
+            Served from the server's cache.
+          }
+        } @else if (sweep().status === 'error') {
+          {{ sweep().message }}
+        } @else {
+          Not checked in this session yet.
+        }
+      </div>
+    </div>
+    @if (sweep().winner) {
+    <span class="syp-pill syp-pill--lime">{{ sweep().winner }}</span>
+    }
+  </div>
+
+  @if (sweep().results.length) {
+  <div class="syp-table-wrap" style="margin-top: 12px">
+    <table class="syp-table">
+      <thead>
+        <tr>
+          <th scope="col">Model</th>
+          <th scope="col">Result</th>
+          <th scope="col" class="syp-right">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (attempt of sweep().results; track attempt.model) {
+        <tr>
+          <td class="syp-truncate">{{ attempt.model }}</td>
+          <td>
+            <span
+              class="settings-outcome"
+              [class.is-good]="attempt.outcome === 'ok'"
+              [class.is-bad]="isHard(attempt.outcome)"
+              [class.is-warn]="!isHard(attempt.outcome) && attempt.outcome !== 'ok'"
+            >
+              {{ attempt.outcome }}
+            </span>
+            @if (attempt.httpStatus) {
+            <span class="syp-muted"> · {{ attempt.httpStatus }}</span>
+            } @if (attempt.message) {
+            <div class="syp-muted settings-why">{{ attempt.message }}</div>
+            }
+          </td>
+          <td class="syp-right">{{ attempt.elapsedMs ? attempt.elapsedMs + ' ms' : '—' }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+</div>
+
+<!-- model choice -->
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <div>
+      <div class="syp-h2">Receipt model</div>
+      <div class="syp-sub" style="font-size: 13px">
+        Applies to this device. Signing out clears it.
+      </div>
+    </div>
+    @if (saved(); as savedModel) {
+    <span class="syp-pill" [class.syp-pill--lime]="savedModel.source === 'manual'">
+      {{ savedModel.source === 'manual' ? 'Chosen by you' : 'Auto-detected' }}
+    </span>
+    } @else {
+    <span class="syp-pill">Server default</span>
+    }
+  </div>
+
+  @if (loading()) {
+  <div class="syp-skeleton" style="height: 44px"></div>
+  } @else if (loadError()) {
+  <div class="syp-notice" role="alert">
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M12 8v4M12 16h.01"></path>
+    </svg>
+    <span>
+      {{ loadError() }}
+      @if (apiOutdated()) {
+        The API does not expose the model endpoints yet — deploy the API before using this
+        screen.
+      }
+    </span>
+  </div>
+  <button class="syp-btn syp-btn--quiet" type="button" (click)="loadCatalogue()">
+    Try again
+  </button>
+  } @else if (catalogue(); as cat) { @if (!cat.keyConfigured) {
+  <div class="syp-notice" role="alert">
+    <span>
+      The server has no <code>GEMINI_API_KEY</code> configured, so no model can be listed or
+      tested.
+    </span>
+  </div>
+  } @else {
+  <div class="syp-field">
+    <label class="syp-label" for="receipt-model">Model</label>
+    <select
+      id="receipt-model"
+      class="syp-select"
+      [value]="selected()"
+      (change)="onSelect($any($event.target).value)"
+    >
+      @for (model of options(); track model.name) {
+      <option [value]="model.name">{{ labelFor(model) }}</option>
+      }
+    </select>
+    <div class="syp-label__hint">
+      ✓ tested and working · ✗ cannot read receipts · ⚠ retry later.
+      {{ cat.models.length }} model{{ cat.models.length === 1 ? '' : 's' }} visible to this key,
+      {{ cat.attemptTimeoutSeconds }}s per attempt.
+    </div>
+  </div>
+
+  <div class="settings-actions">
+    <button class="syp-btn syp-btn--primary" type="button" (click)="save()" [disabled]="!selected()">
+      Save for receipt scans
+    </button>
+    <button
+      class="syp-btn syp-btn--quiet"
+      type="button"
+      (click)="runTest()"
+      [disabled]="testing() || !selected()"
+    >
+      {{ testing() ? 'Testing…' : 'Test on a receipt' }}
+    </button>
+    <button class="syp-btn syp-btn--ghost" type="button" (click)="useServerDefault()">
+      Use server default
+    </button>
+  </div>
+
+  @if (flash()) {
+  <div class="syp-notice syp-notice--good" role="status" style="margin-top: 12px">
+    <span>{{ flash() }}</span>
+  </div>
+  }
+
+  <div class="syp-muted settings-inuse">
+    In use now: <strong>{{ effectiveModel() }}</strong>
+    @if (saved(); as savedModel) {
+    — {{ savedModel.source === 'manual' ? 'your choice' : 'auto-detected' }}, saved
+    {{ whenOf(savedModel.savedAt) }}
+    } @else { — server default }
+  </div>
+
+  @if (excluded().length) {
+  <details class="settings-excluded">
+    <summary class="syp-link-quiet">
+      {{ excluded().length }} model{{ excluded().length === 1 ? '' : 's' }} cannot generate
+      content
+    </summary>
+    <ul class="settings-list">
+      @for (model of excluded(); track model.name) {
+      <li>
+        <code>{{ model.name }}</code> — {{ model.supportedGenerationMethods.join(', ') || 'no
+        supported methods' }}
+      </li>
+      }
+    </ul>
+  </details>
+  } } }
+</div>
+
+<!-- test -->
+<div class="syp-card syp-card--pad">
+  <div class="syp-card-head">
+    <div>
+      <div class="syp-h2">Test</div>
+      <div class="syp-sub" style="font-size: 13px">
+        One call, one model, no fallback — so a dead model cannot look healthy.
+      </div>
+    </div>
+    @if (test(); as outcome) {
+    <span class="syp-pill" [class.syp-pill--lime]="outcome.ok" [class.syp-pill--danger]="!outcome.ok">
+      {{ outcome.ok ? 'Worked' : 'Failed' }}
+    </span>
+    }
+  </div>
+
+  <div class="syp-split">
+    <div>
+      <div class="syp-receipt-frame">
+        <img src="samples/receipt-sample.jpg" alt="Sample receipt used for the test" />
+      </div>
+      <div class="settings-file">
+        <span class="syp-muted syp-truncate">{{ customFile()?.name || 'Bundled sample receipt' }}</span>
+        <label class="syp-btn syp-btn--quiet syp-btn--sm">
+          Use my own
+          <input
+            type="file"
+            class="syp-sr-only"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            (change)="onCustomFile($event)"
+          />
+        </label>
+        @if (customFile()) {
+        <button class="syp-btn syp-btn--ghost syp-btn--sm" type="button" (click)="useSampleAgain()">
+          Use sample
+        </button>
+        }
+      </div>
+    </div>
+
+    <div aria-live="polite">
+      @if (testing()) {
+      <div class="syp-skeleton" style="height: 72px"></div>
+      <p class="syp-sub" style="margin-top: 8px">
+        Sending the receipt to {{ selected() }}…
+      </p>
+      } @else if (test(); as outcome) { @if (outcome.ok) {
+      <div class="syp-notice syp-notice--good">
+        <span>
+          Read with <strong>{{ outcome.model }}</strong> in {{ outcome.elapsedMs }} ms —
+          {{ outcome.merchant || 'merchant not found' }} · {{ outcome.itemCount }} line item{{
+            outcome.itemCount === 1 ? '' : 's'
+          }}
+          · total {{ outcome.total != null ? money(outcome.total) : 'not found' }}.
+        </span>
+      </div>
+      @if (models.model() !== outcome.model) {
+      <button class="syp-btn syp-btn--quiet syp-btn--sm" type="button" (click)="save()">
+        Save it for receipt scans
+      </button>
+      } } @else {
+      <div class="syp-notice" role="alert">
+        <span>{{ outcome.message }}</span>
+      </div>
+
+      @if (suggestion(); as suggested) {
+      <button class="syp-btn syp-btn--quiet syp-btn--sm" type="button" (click)="useSuggestion()">
+        Use Gemini's suggestion: {{ suggested }}
+      </button>
+      } @if (rawFailure()) {
+      <div class="syp-label" style="margin-top: 12px">Gemini's response</div>
+      <pre class="syp-raw">{{ rawFailure() }}</pre>
+      } } } @else {
+      <p class="syp-sub">
+        Test {{ selected() || 'a model' }} to see whether it can read a receipt right now.
+      </p>
+      }
+    </div>
+  </div>
+</div>

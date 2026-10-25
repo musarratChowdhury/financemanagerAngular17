@@ -1,3 +1,11 @@
 :host {
   display: block;
 }
+
+/* Settings + Sign out stay together on the right of the app bar. */
+.syp-mobilebar__actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

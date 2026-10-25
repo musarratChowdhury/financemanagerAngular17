@@ -10,7 +10,7 @@ own pipeline has run.
 ## Repo shape
 
 - Angular 20 standalone components, Tailwind 3 + daisyUI 4, Syncfusion 25.2 (charts, grids, calendars, inputs, notifications, popups).
-- `src/app/pages/layout/**` — the real screens (dashboard, expenses, categories, scan-receipt, cash-flow, current-needs, envelopes).
+- `src/app/pages/layout/**` — the real screens (dashboard, expenses, categories, scan-receipt, cash-flow, current-needs, envelopes, settings).
 - `src/app/pages/{login,register}/` — auth screens.
 - `src/app/services/**` — one service per API area. `src/app/_helpers/` — money/date helpers, HTTP interceptors.
 - `src/syp-theme.css` — the app's own design system (`syp-*` classes, CSS custom properties, light theme). `src/styles.css` — Syncfusion CSS imports + Tailwind entry points. Both are registered in `angular.json` `build.options.styles`.
@@ -21,7 +21,7 @@ own pipeline has run.
 - Install: `npm ci`
 - Dev server: `npm start` → `http://localhost:4200`
 - Production build: `npm run build` (runs `scripts/set-env.js` first — it **rewrites** `src/environments/environment.ts` from `API_URL` / `SYNCFUSION_LICENSE_KEY` env vars, defaults to `https://fmapi.muhit.dev`)
-- Unit tests (karma): `npm test` — needs Chrome. On this machine set `CHROME_BIN` to the Playwright chromium: `C:\Users\muhit\AppData\Local\ms-playwright\chromium-1248\chrome-win64\chrome.exe`
+- Unit tests (karma): `npm test` — needs Chrome. Set `CHROME_BIN` to a real browser first (`C:\Program Files\Google\Chrome\Application\chrome.exe` here) and pass a launcher the Angular 20 builder knows: `npx ng test --watch=false --browsers=ChromeHeadlessNoSandbox`. Naming a custom launcher fails unless `karmaConfig` is set in `angular.json`.
 - E2E (Playwright): `npx playwright test` — see `e2e/` and `playwright.config.ts`.
 - Tailwind's `content` glob is `./src/**/*.{html,ts}`, so class names only exist in templates get purged. daisyUI themes are `night` + `cupcake` and **no `data-theme` is set anywhere**, so daisyUI's own components render dark — use them only on the older daisyUI-styled screens, and the `syp-*` classes on the redesigned ones.
 
@@ -41,6 +41,8 @@ own pipeline has run.
 - `authInterceptor` logs `authToken found` on **every** request. Noisy but harmless; it is a cleanup candidate.
 - **`syp-theme.css` styles a `.syp-*` block as a whole (e.g. `.syp-flow { display: flex; align-items: center }` with legacy fixed widths); when a page restyles the same classes in its scoped component CSS, it must ALSO redefine the container and the properties it doesn't list** — scoped selectors win on what they set, but the theme's container/display/width rules still apply. Cause of the cash-flow "Where the … went" horizontal scroll: theme's flex strip + `align-items: center` shrank every row to content width (~88px) and pushed page scrollWidth to 1201px even though the row grid CSS was deployed and correct. Fix in `cash-flow.component.css` by restating `.syp-flow { display: flex; flex-direction: column; align-items: stretch; padding: 0 }` and `width: auto` on the theme's fixed-width children. Verify such UI bugs with real measurement (Playwright: compare `document.documentElement.scrollWidth` vs `innerWidth`, then walk elements by `getBoundingClientRect().right` — NOT by width; sorted-by-width scans hide narrow elements parked far right).
 - `src/environments/environment.development.ts` points at `https://localhost:7219` (the local API). `environment.ts` (production) is overwritten by the build script — never hand-edit it expecting it to stick.
+- **The receipt-scan model choice is per-browser, not per-account.** `ReceiptModelService` keeps it in `localStorage` (`syp-receipt-model` = `{ model, source, savedAt }`, `syp-receipt-model-tests` = last verdict per model), so `StorageService.clean()` on sign-out wipes it. `source: 'manual'` is never replaced by the startup sweep — only `null` or `'auto'` are. The sweep runs from `LayoutComponent.ngOnInit` (2 s delay) and stands down while a scan is in flight.
+- **Settings needs the API deployed first.** `/api/Receipt/Models` and `/api/Receipt/Probe` are new; an older API answers 404 and the page shows "deploy the API". The dropdown lists only models whose `supportsGenerateContent` is true, and the Test button sends `strict=true` so the server's fallback chain cannot make a dead model look healthy.
 
 ## The date contract with the API
 

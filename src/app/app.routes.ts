@@ -12,6 +12,7 @@ import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
 import { CurrentNeedsComponent } from './pages/layout/current-needs/current-needs.component';
 import { CashFlowComponent } from './pages/layout/cash-flow/cash-flow.component';
 import { EnvelopesComponent } from './pages/layout/envelopes/envelopes.component';
+import { SettingsComponent } from './pages/layout/settings/settings.component';
 
 export const routes: Routes = [
   {
@@ -73,6 +74,11 @@ export const routes: Routes = [
         path: 'envelopes',
         title: 'Envelope budget · Save Your Penny',
         component: EnvelopesComponent,
+      },
+      {
+        path: 'settings',
+        title: 'Settings · Save Your Penny',
+        component: SettingsComponent,
       },
 
       // ---------------------------------------------------------------------

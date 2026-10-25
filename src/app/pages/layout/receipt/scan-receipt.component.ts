@@ -1,12 +1,17 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
-import { ReceiptScannerService } from '../../../services/receipt-scanner.service';
+import { ReceiptModelService } from '../../../services/receipt-model.service';
+import {
+  ReceiptScanError,
+  ReceiptScanResult,
+  ReceiptScannerService,
+} from '../../../services/receipt-scanner.service';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import { money, moneyExact, isoUtcDate, longDate } from '../../../_helpers/money';
 
@@ -38,6 +43,7 @@ interface LineItem {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     DatePickerModule,
     NumericTextBoxModule,
     MobileBarComponent,
@@ -62,6 +68,13 @@ export class ScanReceiptComponent implements OnInit {
   readonly ocrStatus = signal<'idle' | 'scanning' | 'done' | 'unsupported' | 'error'>('idle');
   readonly ocrProgress = signal(0);
   readonly ocrMessage = signal('');
+
+  /** Model asked for, and the model that actually answered (differs after a fallback). */
+  readonly requestedModel = signal<string | null>(null);
+  readonly usedModel = signal('');
+
+  /** Gemini's raw error body for the last failed scan, shown verbatim. */
+  readonly ocrRaw = signal('');
 
   /* ------------------------------------------------------------- review */
 
@@ -124,6 +137,7 @@ export class ScanReceiptComponent implements OnInit {
     private expenseService: ExpenseService,
     private expenseCategoryService: ExpenseCategoryService,
     private receiptScanner: ReceiptScannerService,
+    private receiptModels: ReceiptModelService,
     private router: Router
   ) {}
 
@@ -192,15 +206,25 @@ export class ScanReceiptComponent implements OnInit {
     this.ocrStatus.set('scanning');
     this.ocrProgress.set(0);
     this.ocrMessage.set('Reading receipt…');
+    this.ocrRaw.set('');
+
+    const requested = this.receiptModels.model();
+    this.requestedModel.set(requested);
+    this.usedModel.set('');
+
+    // Tell the background availability sweep to stand down: a scan is already
+    // spending the key's quota and the user is waiting.
+    this.receiptModels.scanInProgress.set(true);
 
     try {
-      const parsed = await this.receiptScanner.recognize(file);
+      const parsed = await this.receiptScanner.recognize(file, requested);
       if (parsed.merchant) this.shop = parsed.merchant;
       if (parsed.date) {
         const date = new Date(parsed.date);
         if (!Number.isNaN(date.getTime())) this.date = date;
       }
       if (parsed.total != null) this.total = parsed.total;
+      this.usedModel.set(parsed.modelUsed ?? requested ?? '');
       this.items.set(
         (parsed.items ?? []).map((item) => ({
           key: this.nextKey++,
@@ -212,11 +236,7 @@ export class ScanReceiptComponent implements OnInit {
       );
       this.ocrProgress.set(1);
       this.ocrStatus.set('done');
-      this.ocrMessage.set(
-        parsed.needsReview
-          ? 'Receipt read. Please check the highlighted totals and every field.'
-          : 'Receipt read. Please review the fields before saving.'
-      );
+      this.ocrMessage.set(this.describeSuccess(parsed));
     } catch (error) {
       console.error('Receipt scan failed:', error);
       this.ocrStatus.set('error');
@@ -225,6 +245,45 @@ export class ScanReceiptComponent implements OnInit {
           ? `${error.message} Please enter the details manually.`
           : 'Could not read this receipt. Please enter the details manually.'
       );
+      this.ocrRaw.set(
+        error instanceof ReceiptScanError
+          ? this.pretty(error.attempts.find((a) => a.rawResponse)?.rawResponse ?? '')
+          : ''
+      );
+    } finally {
+      this.receiptModels.scanInProgress.set(false);
+    }
+  }
+
+  /** Success copy, including the honest note when the server had to fall back. */
+  private describeSuccess(parsed: ReceiptScanResult): string {
+    const base = parsed.needsReview
+      ? 'Receipt read. Please check the highlighted totals and every field.'
+      : 'Receipt read. Please review the fields before saving.';
+
+    const used = this.usedModel();
+    const requested = this.requestedModel();
+
+    if (used && requested && used !== requested) {
+      return `${base} ${requested} was unavailable, so this was read with ${used}.`;
+    }
+
+    return used ? `${base} Read with ${used}.` : base;
+  }
+
+  /** True when the server answered with a model other than the one we asked for. */
+  get fellBack(): boolean {
+    const used = this.usedModel();
+    const requested = this.requestedModel();
+    return !!used && !!requested && used !== requested;
+  }
+
+  private pretty(raw: string): string {
+    if (!raw) return '';
+    try {
+      return JSON.stringify(JSON.parse(raw), null, 2);
+    } catch {
+      return raw;
     }
   }
 
@@ -313,6 +372,9 @@ export class ScanReceiptComponent implements OnInit {
     this.ocrStatus.set('idle');
     this.ocrProgress.set(0);
     this.ocrMessage.set('');
+    this.ocrRaw.set('');
+    this.requestedModel.set(null);
+    this.usedModel.set('');
     this.step.set(1);
   }
 

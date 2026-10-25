@@ -1,7 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SidebarComponent } from '../reusables/sidebar/sidebar.component';
 import { TabBarComponent } from '../reusables/tabbar/tabbar.component';
+import { ReceiptModelService } from '../../services/receipt-model.service';
 
 /**
  * App shell.
@@ -17,4 +18,13 @@ import { TabBarComponent } from '../reusables/tabbar/tabbar.component';
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.css',
 })
-export class LayoutComponent {}
+export class LayoutComponent implements OnInit {
+  private readonly receiptModels = inject(ReceiptModelService);
+
+  ngOnInit(): void {
+    // Work out which Gemini model can read a receipt, in the background. Delayed
+    // so the first screen gets the network to itself; the sweep itself is cached
+    // server-side for ten minutes, so it is cheap on every later sign-in.
+    setTimeout(() => void this.receiptModels.runSweep(), 2000);
+  }
+}

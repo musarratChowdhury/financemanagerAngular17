@@ -1,3 +1,14 @@
 :host {
   display: contents;
 }
+
+/* Settings and Sign out sit on one line inside the account block. */
+.syp-account__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.syp-account__link {
+  text-decoration: none;
+}
