@@ -55,6 +55,46 @@ interface ExpenseGroup {
 export type LedgerView = 'expenses' | 'receipts';
 
 /**
+ * One control for both views. Encoding field and direction in a single value
+ * keeps the UI to one select: "date, latest first" is the default the ledger
+ * opens with, and reversing or switching to amount is one choice, not two.
+ */
+export type SortKey = 'date-desc' | 'date-asc' | 'amount-desc' | 'amount-asc';
+
+export const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: 'date-desc', label: 'Date · latest first' },
+  { key: 'date-asc', label: 'Date · oldest first' },
+  { key: 'amount-desc', label: 'Amount · high to low' },
+  { key: 'amount-asc', label: 'Amount · low to high' },
+];
+
+/**
+ * Builds a comparator for the active sort. `date-desc` puts the newest row on
+ * top, which is how the ledger reads by default; amount sorting falls back to
+ * the same date order so equal amounts do not shuffle between renders.
+ */
+function sortComparator<T>(
+  sortKey: SortKey,
+  dateOf: (row: T) => string | null,
+  amountOf: (row: T) => number
+): (a: T, b: T) => number {
+  const byAmount = sortKey.startsWith('amount');
+  const ascending = sortKey.endsWith('asc');
+
+  return (a, b) => {
+    const amountDelta = amountOf(a) - amountOf(b);
+    const dateDelta = dateValue(dateOf(a)) - dateValue(dateOf(b));
+
+    if (byAmount && amountDelta !== 0) {
+      return ascending ? amountDelta : -amountDelta;
+    }
+
+    // Newest first unless explicitly ascending.
+    return ascending ? dateDelta : -dateDelta;
+  };
+}
+
+/**
  * The ledger — two views over the same data.
  *
  * `expenses` lists individual lines with search, category filter and an optional
@@ -101,6 +141,10 @@ export class ExpensesComponent implements OnInit {
   readonly search = signal('');
   readonly filterCategory = signal<number | 'all'>('all');
 
+  /** Shared by both views — the ledger opens on newest-first. */
+  readonly sortKey = signal<SortKey>('date-desc');
+  readonly sortOptions = SORT_OPTIONS;
+
   /** Group the flat expense list by the receipt it came from. */
   readonly groupByReceipt = signal(false);
 
@@ -138,13 +182,33 @@ export class ExpensesComponent implements OnInit {
     });
   });
 
+  /** `filtered` in the user's chosen order — this is what both views render. */
+  readonly sortedRows = computed(() => {
+    const compare = sortComparator<LedgerExpense>(
+      this.sortKey(),
+      (row) => row.date,
+      (row) => row.amount
+    );
+    return [...this.filtered()].sort(compare);
+  });
+
+  /** Same control, applied to receipt headers (ordered by net payable). */
+  readonly sortedReceipts = computed(() => {
+    const compare = sortComparator<ReceiptLedgerRow>(
+      this.sortKey(),
+      (row) => row.date,
+      (row) => row.netPayable
+    );
+    return [...this.receipts()].sort(compare);
+  });
+
   readonly pageCount = computed(() =>
-    Math.max(1, Math.ceil(this.filtered().length / this.pageSize))
+    Math.max(1, Math.ceil(this.sortedRows().length / this.pageSize))
   );
 
   readonly paged = computed(() => {
     const start = (this.page() - 1) * this.pageSize;
-    return this.filtered().slice(start, start + this.pageSize);
+    return this.sortedRows().slice(start, start + this.pageSize);
   });
 
   readonly grandTotal = computed(() =>
@@ -155,12 +219,16 @@ export class ExpensesComponent implements OnInit {
     this.receipts().reduce((sum, r) => sum + r.netPayable, 0)
   );
 
-  /** The flat list bucketed by receipt, biggest group first, "no receipt" last. */
+  /**
+   * The flat list bucketed by receipt. Groups stay ordered by their own total
+   * (biggest first, "no receipt" last) — that is a grouping summary, not a row
+   * order — but the line items inside each group follow the chosen sort.
+   */
   readonly groups = computed<ExpenseGroup[]>(() => {
     const byReceipt = new Map<string, ExpenseGroup>();
     const receiptById = new Map(this.receipts().map((r) => [r.id, r]));
 
-    for (const expense of this.filtered()) {
+    for (const expense of this.sortedRows()) {
       const key = expense.receiptId == null ? 'none' : String(expense.receiptId);
       let group = byReceipt.get(key);
 
@@ -251,9 +319,8 @@ export class ExpensesComponent implements OnInit {
           receiptId: e.receiptId ?? null,
         }));
 
-        // Newest first — the ledger reads like a statement.
-        mapped.sort((a, b) => dateValue(b.date) - dateValue(a.date));
-
+        // Ordering is the `sortedRows` computed's job, so a change of sort does
+        // not need a reload.
         this.rows.set(mapped);
         this.loading.set(false);
       },
@@ -292,7 +359,8 @@ export class ExpensesComponent implements OnInit {
           })),
         }));
 
-        mapped.sort((a, b) => dateValue(b.date) - dateValue(a.date));
+        // Ordering comes from `sortedReceipts`, not the load, so switching sort
+        // re-orders without a round trip.
         this.receipts.set(mapped);
         this.receiptsLoading.set(false);
       },
@@ -361,6 +429,12 @@ export class ExpensesComponent implements OnInit {
 
   onFilterCategory(value: string): void {
     this.filterCategory.set(value === 'all' ? 'all' : Number(value));
+    this.page.set(1);
+  }
+
+  onSortChange(value: string): void {
+    this.sortKey.set(value as SortKey);
+    // Row order changed, so page 1 is the only page guaranteed to still make sense.
     this.page.set(1);
   }
 

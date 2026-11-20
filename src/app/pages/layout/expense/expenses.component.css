@@ -99,6 +99,11 @@
 
 /* ------------------------------------------------------------- grouping */
 
+.ledger-tools__note {
+  font-size: 12.5px;
+  align-self: center;
+  margin-left: auto;
+}
 .ledger-group {
   border-bottom: 1px solid var(--syp-border);
 }

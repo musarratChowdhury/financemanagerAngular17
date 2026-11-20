@@ -221,6 +221,23 @@
         }
       </select>
 
+      <label class="syp-sr-only" for="ex-sort">Sort by</label>
+      <select
+        id="ex-sort"
+        class="syp-select"
+        [value]="sortKey()"
+        (change)="onSortChange($any($event.target).value)"
+      >
+        @for (option of sortOptions; track option.key) {
+          <!-- `selected` as well as the select's `value`: the options are created
+               after the select's binding, so a value set too early is dropped and
+               the control would silently show the first option. -->
+          <option [value]="option.key" [selected]="option.key === sortKey()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+
       <button
         type="button"
         class="syp-btn syp-btn--quiet syp-btn--sm"
@@ -426,6 +443,26 @@
 <!-- ===================== receipts ===================== -->
 @if (view() === 'receipts') {
   <div class="syp-card syp-card--flush">
+    <div class="syp-ledger-tools">
+      <label class="syp-sr-only" for="rc-sort">Sort by</label>
+      <select
+        id="rc-sort"
+        class="syp-select"
+        [value]="sortKey()"
+        (change)="onSortChange($any($event.target).value)"
+      >
+        @for (option of sortOptions; track option.key) {
+          <option [value]="option.key" [selected]="option.key === sortKey()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+
+      <span class="syp-muted ledger-tools__note">
+        Amount sorts by total payable.
+      </span>
+    </div>
+
     @if (receiptsLoading()) {
       <div style="padding: 16px">
         @for (n of [0, 1, 2, 3]; track n) {
@@ -456,7 +493,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (receipt of receipts(); track receipt.id; let i = $index) {
+            @for (receipt of sortedReceipts(); track receipt.id; let i = $index) {
               <tr
                 class="ledger-receipt-row"
                 [class.is-open]="isExpanded(receipt.id)"
