@@ -2,34 +2,65 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import {
-  DatePickerModule,
-  DatePickerComponent,
-} from '@syncfusion/ej2-angular-calendars';
-import { GridModule, PageService } from '@syncfusion/ej2-angular-grids';
-import {
-  NumericTextBoxModule,
-  TextBoxModule,
-} from '@syncfusion/ej2-angular-inputs';
-import { ToastComponent } from '@syncfusion/ej2-angular-notifications';
+import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
+import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
-import { BudgetService } from '../../../services/budget.service';
-import { ExpenseRow } from '../../../../models/Budget';
+import { ReceiptService } from '../../../services/receipt.service';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
-import { money, shortDate, isoUtcDate, percent } from '../../../_helpers/money';
+import { money, shortDate, isoUtcDate, isoDate } from '../../../_helpers/money';
 
 interface CategoryOption {
   id: number;
   name: string;
 }
 
+/** One expense line as this page renders it. */
+interface LedgerExpense {
+  id: number;
+  title: string;
+  categoryId: number | null;
+  categoryName: string;
+  amount: number;
+  quantity: number | null;
+  unitPrice: number | null;
+  /** Display date; also the source for the edit form. */
+  date: string | null;
+  /** null for expenses entered by hand rather than from a scanned receipt. */
+  receiptId: number | null;
+}
+
+/** A receipt header plus the line items it owns. */
+interface ReceiptLedgerRow {
+  id: number;
+  merchant: string | null;
+  invoiceNo: string | null;
+  date: string;
+  grossTotal: number;
+  discount: number;
+  netPayable: number;
+  totalItems: number;
+  expenses: LedgerExpense[];
+}
+
+/** Expenses bucketed by receipt, for the "group by receipts" view. */
+interface ExpenseGroup {
+  key: string;
+  label: string;
+  sublabel: string;
+  total: number;
+  expenses: LedgerExpense[];
+}
+
+export type LedgerView = 'expenses' | 'receipts';
+
 /**
- * Expenses — the add form and the ledger on one screen.
+ * The ledger — two views over the same data.
  *
- * Mobile-first: the form comes first (adding an expense is the primary action),
- * the ledger below it as tappable rows. From 1024px they sit side by side with
- * a Syncfusion Grid for the ledger.
+ * `expenses` lists individual lines with search, category filter and an optional
+ * receipt grouping. `receipts` lists receipt headers; a row expands in place to
+ * reveal the lines it owns, which is why the receipts endpoint returns each
+ * receipt with its expenses already loaded.
  */
 @Component({
   selector: 'app-expenses',
@@ -39,19 +70,15 @@ interface CategoryOption {
     FormsModule,
     RouterLink,
     DatePickerModule,
-    GridModule,
-    TextBoxModule,
     NumericTextBoxModule,
     MobileBarComponent,
   ],
-  providers: [PageService],
   templateUrl: './expenses.component.html',
   styleUrl: './expenses.component.css',
 })
 export class ExpensesComponent implements OnInit {
   readonly money = money;
   readonly shortDate = shortDate;
-  readonly percent = percent;
 
   /* ------------------------------------------------------------------ form */
 
@@ -64,16 +91,38 @@ export class ExpensesComponent implements OnInit {
 
   readonly categories = signal<CategoryOption[]>([]);
   readonly saving = signal(false);
+  readonly saveError = signal(false);
 
   /* ---------------------------------------------------------------- ledger */
 
-  readonly rows = signal<ExpenseRow[]>([]);
+  readonly view = signal<LedgerView>('expenses');
+  readonly rows = signal<LedgerExpense[]>([]);
   readonly loading = signal(true);
   readonly search = signal('');
   readonly filterCategory = signal<number | 'all'>('all');
 
+  /** Group the flat expense list by the receipt it came from. */
+  readonly groupByReceipt = signal(false);
+
+  readonly receipts = signal<ReceiptLedgerRow[]>([]);
+  readonly receiptsLoading = signal(true);
+  readonly receiptsError = signal('');
+  /** Receipt id whose line items are expanded; only one open at a time. */
+  readonly expandedReceipt = signal<number | null>(null);
+
+  /* --------------------------------------------------------------- editing */
+
+  readonly editDraft = signal<EditDraft | null>(null);
+  readonly editSaving = signal(false);
+  readonly editError = signal('');
+  readonly deletingId = signal<number | null>(null);
+
   readonly pageSize = 8;
   readonly page = signal(1);
+
+  private readonly categoryNames = computed(
+    () => new Map(this.categories().map((c) => [c.id, c.name]))
+  );
 
   readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
@@ -102,15 +151,50 @@ export class ExpensesComponent implements OnInit {
     this.filtered().reduce((sum, r) => sum + r.amount, 0)
   );
 
-  readonly scannedCount = computed(
-    () => this.filtered().filter((r) => r.scanned).length
+  readonly receiptsTotal = computed(() =>
+    this.receipts().reduce((sum, r) => sum + r.netPayable, 0)
   );
 
+  /** The flat list bucketed by receipt, biggest group first, "no receipt" last. */
+  readonly groups = computed<ExpenseGroup[]>(() => {
+    const byReceipt = new Map<string, ExpenseGroup>();
+    const receiptById = new Map(this.receipts().map((r) => [r.id, r]));
+
+    for (const expense of this.filtered()) {
+      const key = expense.receiptId == null ? 'none' : String(expense.receiptId);
+      let group = byReceipt.get(key);
+
+      if (!group) {
+        const receipt = expense.receiptId == null ? null : receiptById.get(expense.receiptId);
+        group = {
+          key,
+          label: receipt
+            ? receipt.merchant?.trim() || `Receipt #${receipt.id}`
+            : 'No receipt',
+          sublabel: receipt
+            ? `${shortDate(receipt.date)}${receipt.invoiceNo ? ` · Invoice ${receipt.invoiceNo}` : ''}`
+            : 'Entered by hand',
+          total: 0,
+          expenses: [],
+        };
+        byReceipt.set(key, group);
+      }
+
+      group.expenses.push(expense);
+      group.total += expense.amount;
+    }
+
+    return [...byReceipt.values()].sort((a, b) => {
+      if (a.key === 'none') return 1;
+      if (b.key === 'none') return -1;
+      return b.total - a.total;
+    });
+  });
+
   /**
-   * Getters rather than computed() signals: these read plain form fields,
-   * which never mark a computed dirty — a computed would cache its initial
-   * result forever and keep the Add button disabled even with everything
-   * filled in. With default change detection these re-evaluate on each CD cycle.
+   * Getters rather than computed() signals: these read plain form fields, which
+   * never mark a computed dirty — a computed would cache its first result and
+   * keep the Add button disabled even with everything filled in.
    */
   get computedAmount(): number {
     if (this.amount != null && this.amount > 0) return this.amount;
@@ -131,21 +215,21 @@ export class ExpensesComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private expenseCategoryService: ExpenseCategoryService,
-    private budgetService: BudgetService
+    private receiptService: ReceiptService
   ) {}
 
   ngOnInit(): void {
     this.loadCategories();
     this.loadRows();
+    this.loadReceipts();
   }
+
+  /* ------------------------------------------------------------------ load */
 
   private loadCategories(): void {
     this.expenseCategoryService.getAll().subscribe({
-      next: (data: any[]) => {
-        this.categories.set(
-          (data ?? []).map((c) => ({ id: c.id, name: c.name }))
-        );
-      },
+      next: (data: any[]) =>
+        this.categories.set((data ?? []).map((c) => ({ id: c.id, name: c.name }))),
       // The form still works; the category list is simply empty.
       error: () => this.categories.set([]),
     });
@@ -153,44 +237,22 @@ export class ExpensesComponent implements OnInit {
 
   private loadRows(): void {
     this.loading.set(true);
-    this.budgetService.loadMonth(
-      new Date().getMonth() + 1,
-      new Date().getFullYear()
-    ).subscribe({
-      next: (snapshot) => {
-        // The month endpoint only returns category groups, so pull every
-        // expense and filter locally — the ledger is not month-scoped.
-        this.loadAllRows(snapshot.categories);
-      },
-      error: () => this.loadAllRows([]),
-    });
-  }
-
-  private loadAllRows(fallbackCats: { categoryId: number; categoryName: string }[]): void {
-    const catNames = new Map<number, string>();
-    for (const c of this.categories()) catNames.set(c.id, c.name);
-    for (const c of fallbackCats) {
-      if (!catNames.has(c.categoryId)) catNames.set(c.categoryId, c.categoryName);
-    }
-
     this.expenseService.getAll().subscribe({
       next: (data: any[]) => {
-        const mapped: ExpenseRow[] = (data ?? []).map((e) => ({
+        const mapped: LedgerExpense[] = (data ?? []).map((e) => ({
           id: e.id,
           title: e.cause ?? 'Expense',
-          categoryId: e.expenseCategoryId,
-          categoryName: catNames.get(e.expenseCategoryId) ?? 'Uncategorised',
+          categoryId: e.expenseCategoryId ?? null,
+          categoryName: this.categoryLabel(e.expenseCategoryId),
           amount: Number(e.amount) || 0,
           quantity: e.quantity ?? null,
           unitPrice: e.unitPrice ?? null,
-          date: e.expenseDate,
-          scanned: false,
+          date: e.expenseDate ?? e.entryDate ?? null,
+          receiptId: e.receiptId ?? null,
         }));
 
         // Newest first — the ledger reads like a statement.
-        mapped.sort(
-          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
+        mapped.sort((a, b) => dateValue(b.date) - dateValue(a.date));
 
         this.rows.set(mapped);
         this.loading.set(false);
@@ -202,7 +264,74 @@ export class ExpensesComponent implements OnInit {
     });
   }
 
-  /* ---------------------------------------------------------------- actions */
+  private loadReceipts(): void {
+    this.receiptsLoading.set(true);
+    this.receiptsError.set('');
+
+    this.receiptService.getAll().subscribe({
+      next: (data: any[]) => {
+        const mapped: ReceiptLedgerRow[] = (data ?? []).map((r) => ({
+          id: r.id,
+          merchant: r.merchant ?? null,
+          invoiceNo: r.invoiceNo ?? null,
+          date: r.receiptDateTime ?? r.entryDate ?? new Date().toISOString(),
+          grossTotal: Number(r.grossTotal) || 0,
+          discount: Number(r.discount) || 0,
+          netPayable: Number(r.netPayable) || 0,
+          totalItems: Number(r.totalItems) || (r.expenses?.length ?? 0),
+          expenses: (r.expenses ?? []).map((e: any) => ({
+            id: e.id,
+            title: e.cause ?? 'Expense',
+            categoryId: e.expenseCategoryId ?? null,
+            categoryName: this.categoryLabel(e.expenseCategoryId),
+            amount: Number(e.amount) || 0,
+            quantity: e.quantity ?? null,
+            unitPrice: e.unitPrice ?? null,
+            date: e.expenseDate ?? e.entryDate ?? null,
+            receiptId: e.receiptId ?? r.id,
+          })),
+        }));
+
+        mapped.sort((a, b) => dateValue(b.date) - dateValue(a.date));
+        this.receipts.set(mapped);
+        this.receiptsLoading.set(false);
+      },
+      error: () => {
+        this.receipts.set([]);
+        this.receiptsLoading.set(false);
+        this.receiptsError.set('Could not load receipts.');
+      },
+    });
+  }
+
+  /** The API returns a category id; the name lives in the categories list. */
+  private categoryLabel(categoryId: number | null | undefined): string {
+    if (categoryId == null) return 'Uncategorised';
+    return this.categoryNames().get(categoryId) ?? 'Uncategorised';
+  }
+
+  /* ----------------------------------------------------------------- views */
+
+  setView(view: LedgerView): void {
+    this.view.set(view);
+    // A receipt that was open in one view should not stay open in the other.
+    this.expandedReceipt.set(null);
+  }
+
+  toggleGrouping(): void {
+    this.groupByReceipt.update((on) => !on);
+    this.page.set(1);
+  }
+
+  toggleReceipt(id: number): void {
+    this.expandedReceipt.update((open) => (open === id ? null : id));
+  }
+
+  isExpanded(id: number): boolean {
+    return this.expandedReceipt() === id;
+  }
+
+  /* ---------------------------------------------------------------- filters */
 
   onQuantity(value: number | null): void {
     this.quantity = value;
@@ -236,9 +365,10 @@ export class ExpensesComponent implements OnInit {
   }
 
   goToPage(next: number): void {
-    const clamped = Math.min(Math.max(1, next), this.pageCount());
-    this.page.set(clamped);
+    this.page.set(Math.min(Math.max(1, next), this.pageCount()));
   }
+
+  /* ------------------------------------------------------------------ save */
 
   save(): void {
     if (!this.canSave) return;
@@ -262,13 +392,10 @@ export class ExpensesComponent implements OnInit {
       },
       error: () => {
         this.saving.set(false);
-        // Surfaced inline rather than as a toast so it cannot be missed.
         this.saveError.set(true);
       },
     });
   }
-
-  readonly saveError = signal(false);
 
   clear(): void {
     this.resetForm();
@@ -283,4 +410,111 @@ export class ExpensesComponent implements OnInit {
     this.date = new Date();
     this.saveError.set(false);
   }
+
+  /* ------------------------------------------------------------------ edit */
+
+  startEdit(row: LedgerExpense): void {
+    this.editError.set('');
+    this.editDraft.set({
+      id: row.id,
+      title: row.title,
+      categoryId: row.categoryId,
+      quantity: row.quantity,
+      unitPrice: row.unitPrice,
+      amount: row.amount,
+      date: isoDate(row.date),
+    });
+  }
+
+  cancelEdit(): void {
+    this.editDraft.set(null);
+    this.editError.set('');
+  }
+
+  patchDraft(partial: Partial<EditDraft>): void {
+    this.editDraft.update((draft) => (draft ? { ...draft, ...partial } : draft));
+  }
+
+  saveEdit(): void {
+    const draft = this.editDraft();
+    if (!draft || this.editSaving()) return;
+
+    const amount =
+      draft.amount != null && draft.amount > 0
+        ? draft.amount
+        : (draft.quantity ?? 0) * (draft.unitPrice ?? 0);
+
+    if (!draft.title.trim() || amount <= 0) {
+      this.editError.set('A title and an amount above zero are required.');
+      return;
+    }
+
+    this.editSaving.set(true);
+    this.editError.set('');
+
+    // The controller requires the body's id to match the route, and treats
+    // CreatedBy/EntryDate as server-owned, so they are omitted deliberately.
+    const payload = {
+      id: draft.id,
+      cause: draft.title.trim(),
+      amount,
+      quantity: draft.quantity,
+      unitPrice: draft.unitPrice,
+      expenseDate: `${draft.date}T00:00:00.000Z`,
+      expenseCategoryId: draft.categoryId,
+    };
+
+    this.expenseService.update(draft.id, payload).subscribe({
+      next: () => {
+        this.editSaving.set(false);
+        this.editDraft.set(null);
+        this.loadRows();
+        this.loadReceipts();
+      },
+      error: () => {
+        this.editSaving.set(false);
+        this.editError.set('Could not save the change. Please try again.');
+      },
+    });
+  }
+
+  /* ---------------------------------------------------------------- delete */
+
+  remove(row: LedgerExpense): void {
+    if (this.deletingId() != null) return;
+
+    const confirmed = window.confirm(`Delete "${row.title}"? This cannot be undone.`);
+    if (!confirmed) return;
+
+    this.deletingId.set(row.id);
+    this.expenseService.delete(row.id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        this.rows.update((rows) => rows.filter((r) => r.id !== row.id));
+        // The receipt header keeps its scanned totals; only the line disappears.
+        this.loadReceipts();
+      },
+      error: () => {
+        this.deletingId.set(null);
+        window.alert('Could not delete that expense.');
+      },
+    });
+  }
+}
+
+interface EditDraft {
+  id: number;
+  title: string;
+  categoryId: number | null;
+  quantity: number | null;
+  unitPrice: number | null;
+  amount: number | null;
+  /** `yyyy-MM-dd`, from a native date input. */
+  date: string;
+}
+
+function dateValue(value: string | null | undefined): number {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
 }

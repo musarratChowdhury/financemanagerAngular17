@@ -5,7 +5,11 @@
     <div class="syp-eyebrow">Ledger</div>
     <h1 class="syp-h1">Expenses</h1>
     <p class="syp-sub" style="margin-top: 6px">
-      Every purchase, in one place — {{ filtered().length }} recorded.
+      @if (view() === 'expenses') {
+        {{ filtered().length }} expense{{ filtered().length === 1 ? '' : 's' }} recorded.
+      } @else {
+        {{ receipts().length }} receipt{{ receipts().length === 1 ? '' : 's' }} recorded.
+      }
     </p>
   </div>
 
@@ -32,6 +36,32 @@
   </div>
 </div>
 
+<!-- ===================== view switch ===================== -->
+<div class="syp-card syp-card--pad ledger-switch" role="group" aria-label="View by">
+  <span class="syp-label" style="margin: 0 12px 0 0">View by</span>
+  <div class="ledger-switch__options">
+    <button
+      type="button"
+      class="ledger-switch__btn"
+      [class.is-active]="view() === 'expenses'"
+      [attr.aria-pressed]="view() === 'expenses'"
+      (click)="setView('expenses')"
+    >
+      Expense rows
+    </button>
+    <button
+      type="button"
+      class="ledger-switch__btn"
+      [class.is-active]="view() === 'receipts'"
+      [attr.aria-pressed]="view() === 'receipts'"
+      (click)="setView('receipts')"
+    >
+      Receipts
+    </button>
+  </div>
+</div>
+
+@if (view() === 'expenses') {
 <div class="syp-grid syp-grid--20">
   <!-- ========================= add form ========================= -->
   <div class="syp-card syp-card--pad syp-col-340">
@@ -94,12 +124,7 @@
 
     <div class="syp-field">
       <label class="syp-label" for="ex-cat">Category</label>
-      <select
-        id="ex-cat"
-        class="syp-select"
-        style="width: 100%"
-        [(ngModel)]="categoryId"
-      >
+      <select id="ex-cat" class="syp-select" style="width: 100%" [(ngModel)]="categoryId">
         <option [ngValue]="null">Select a category</option>
         @for (cat of categories(); track cat.id) {
           <option [ngValue]="cat.id">{{ cat.name }}</option>
@@ -166,13 +191,11 @@
       >
         {{ saving() ? 'Saving…' : 'Add expense' }}
       </button>
-      <button type="button" class="syp-btn syp-btn--quiet" (click)="clear()">
-        Clear
-      </button>
+      <button type="button" class="syp-btn syp-btn--quiet" (click)="clear()">Clear</button>
     </div>
   </div>
 
-  <!-- ========================= ledger ========================= -->
+  <!-- ========================= expense rows ========================= -->
   <div class="syp-card syp-card--flush syp-col-520">
     <div class="syp-ledger-tools">
       <label class="syp-sr-only" for="ex-search">Search expenses</label>
@@ -180,7 +203,7 @@
         id="ex-search"
         type="search"
         class="syp-input"
-        placeholder="Search expenses"
+        placeholder="Search by name"
         [value]="search()"
         (input)="onSearch($any($event.target).value)"
       />
@@ -194,112 +217,202 @@
       >
         <option value="all">All categories</option>
         @for (cat of categories(); track cat.id) {
-        <option [value]="cat.id">{{ cat.name }}</option>
+          <option [value]="cat.id">{{ cat.name }}</option>
         }
       </select>
+
+      <button
+        type="button"
+        class="syp-btn syp-btn--quiet syp-btn--sm"
+        [class.is-active]="groupByReceipt()"
+        [attr.aria-pressed]="groupByReceipt()"
+        (click)="toggleGrouping()"
+      >
+        Group by receipts
+      </button>
     </div>
 
     @if (loading()) {
     <div style="padding: 16px">
       @for (n of [0, 1, 2, 3, 4]; track n) {
-      <div class="syp-skeleton" style="height: 44px; margin-bottom: 8px"></div>
+        <div class="syp-skeleton" style="height: 44px; margin-bottom: 8px"></div>
       }
     </div>
     } @else if (!filtered().length) {
     <div class="syp-empty">
       <div class="syp-empty__title">No expenses found</div>
       <p class="syp-sub">
-        @if (search() || filterCategory() !== 'all') { Try a different search or
-        category. } @else { Add your first expense using the form. }
+        @if (search() || filterCategory() !== 'all') {
+          Try a different search or category.
+        } @else {
+          Add your first expense using the form.
+        }
       </p>
     </div>
-    } @else {
-    <!-- Phone: tappable rows -->
-    <div class="syp-list syp-ledger-pad syp-only-mobile">
-      @for (row of paged(); track row.id) {
-      <div class="syp-list__row">
-        <div class="syp-list__main">
-          <div class="syp-list__title">
-            {{ row.title }}
-            @if (row.scanned) {
-            <span class="syp-pill syp-pill--lime" style="margin-left: 6px"
-              >Scanned</span
-            >
-            }
+    } @else if (groupByReceipt()) {
+      <!-- grouped by receipt -->
+      @for (group of groups(); track group.key) {
+        <div class="ledger-group">
+          <div class="ledger-group__head">
+            <div>
+              <div class="ledger-group__title">{{ group.label }}</div>
+              <div class="syp-muted ledger-group__sub">
+                {{ group.sublabel }} · {{ group.expenses.length }} line{{ group.expenses.length === 1 ? '' : 's' }}
+              </div>
+            </div>
+            <div class="ledger-group__total">{{ money(group.total) }}</div>
           </div>
-          <div class="syp-list__meta">
-            {{ row.categoryName }} · {{ shortDate(row.date) }}
-            @if (row.quantity) { · ×{{ row.quantity }} }
+
+          <div class="syp-table-wrap">
+            <table class="syp-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col" class="syp-right">Qty</th>
+                  <th scope="col" class="syp-right">Unit</th>
+                  <th scope="col" class="syp-right">Amount</th>
+                  <th scope="col" class="syp-right">Date</th>
+                  <th scope="col" class="syp-right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of group.expenses; track row.id) {
+                  <tr>
+                    <td class="syp-table__title">
+                      {{ row.title }}
+                      <span class="syp-pill ledger-cat">{{ row.categoryName }}</span>
+                    </td>
+                    <td class="syp-right">{{ row.quantity ?? '—' }}</td>
+                    <td class="syp-right syp-muted">{{ money(row.unitPrice) }}</td>
+                    <td class="syp-right" style="font-weight: 600">{{ money(row.amount) }}</td>
+                    <td class="syp-right syp-muted">{{ shortDate(row.date) }}</td>
+                    <td class="syp-right">
+                      <div class="ledger-actions">
+                        <button
+                          type="button"
+                          class="ledger-icon-btn"
+                          title="Edit"
+                          aria-label="Edit expense"
+                          (click)="startEdit(row)"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M12 20h9"></path>
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                          </svg>
+                        </button>
+                        <button
+                          type="button"
+                          class="ledger-icon-btn ledger-icon-btn--danger"
+                          title="Delete"
+                          aria-label="Delete expense"
+                          [disabled]="deletingId() === row.id"
+                          (click)="remove(row)"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M3 6h18"></path>
+                            <path d="M8 6V4h8v2"></path>
+                            <path d="M19 6l-1 14H6L5 6"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
           </div>
         </div>
-        <div class="syp-list__amount">{{ money(row.amount) }}</div>
-      </div>
       }
-    </div>
 
-    <!-- Tablet and up: the table from the design -->
-    <div class="syp-table-wrap syp-only-wide">
-      <table class="syp-table">
-        <thead>
-          <tr>
-            <th>Expense</th>
-            <th>Category</th>
-            <th class="syp-right">Qty</th>
-            <th class="syp-right">Unit</th>
-            <th class="syp-right">Amount</th>
-            <th class="syp-right">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of paged(); track row.id) {
-          <tr>
-            <td class="syp-table__title">
-              {{ row.title }}
-              @if (row.scanned) {
-              <span class="syp-pill syp-pill--lime" style="margin-left: 8px"
-                >Scanned</span
-              >
-              }
-            </td>
-            <td><span class="syp-pill">{{ row.categoryName }}</span></td>
-            <td class="syp-right">{{ row.quantity ?? '—' }}</td>
-            <td class="syp-right syp-muted">{{ money(row.unitPrice) }}</td>
-            <td class="syp-right" style="font-weight: 600">
-              {{ money(row.amount) }}
-            </td>
-            <td class="syp-right syp-muted">{{ shortDate(row.date) }}</td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+      <div class="syp-table-foot">
+        <div>{{ filtered().length }} item{{ filtered().length === 1 ? '' : 's' }} in {{ groups().length }} group{{ groups().length === 1 ? '' : 's' }}</div>
+      </div>
+    } @else {
+      <!-- flat expense list -->
+      <div class="syp-table-wrap">
+        <table class="syp-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col" class="syp-right">Qty</th>
+              <th scope="col" class="syp-right">Unit</th>
+              <th scope="col" class="syp-right">Amount</th>
+              <th scope="col" class="syp-right">Date</th>
+              <th scope="col" class="syp-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of paged(); track row.id) {
+              <tr>
+                <td class="syp-table__title">
+                  {{ row.title }}
+                  <span class="syp-pill ledger-cat">{{ row.categoryName }}</span>
+                </td>
+                <td class="syp-right">{{ row.quantity ?? '—' }}</td>
+                <td class="syp-right syp-muted">{{ money(row.unitPrice) }}</td>
+                <td class="syp-right" style="font-weight: 600">{{ money(row.amount) }}</td>
+                <td class="syp-right syp-muted">{{ shortDate(row.date) }}</td>
+                <td class="syp-right">
+                  <div class="ledger-actions">
+                    <button
+                      type="button"
+                      class="ledger-icon-btn"
+                      title="Edit"
+                      aria-label="Edit expense"
+                      (click)="startEdit(row)"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path>
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="ledger-icon-btn ledger-icon-btn--danger"
+                      title="Delete"
+                      aria-label="Delete expense"
+                      [disabled]="deletingId() === row.id"
+                      (click)="remove(row)"
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M3 6h18"></path>
+                        <path d="M8 6V4h8v2"></path>
+                        <path d="M19 6l-1 14H6L5 6"></path>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
 
-    <div class="syp-table-foot">
-      <div>
-        Page {{ page() }} of {{ pageCount() }} · {{ filtered().length }} items
-        @if (scannedCount() > 0) { · {{ scannedCount() }} scanned }
+      <div class="syp-table-foot">
+        <div>
+          Page {{ page() }} of {{ pageCount() }} · {{ filtered().length }} items
+        </div>
+        <div class="syp-pager">
+          <button
+            type="button"
+            class="syp-pager__btn"
+            [disabled]="page() === 1"
+            (click)="goToPage(page() - 1)"
+            aria-label="Previous page"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            class="syp-pager__btn"
+            [disabled]="page() === pageCount()"
+            (click)="goToPage(page() + 1)"
+            aria-label="Next page"
+          >
+            ›
+          </button>
+        </div>
       </div>
-      <div class="syp-pager">
-        <button
-          type="button"
-          class="syp-pager__btn"
-          [disabled]="page() === 1"
-          (click)="goToPage(page() - 1)"
-          aria-label="Previous page"
-        >
-          ‹
-        </button>
-        <button
-          type="button"
-          class="syp-pager__btn"
-          [disabled]="page() === pageCount()"
-          (click)="goToPage(page() + 1)"
-          aria-label="Next page"
-        >
-          ›
-        </button>
-      </div>
-    </div>
     }
 
     <div class="syp-grand-total">
@@ -308,3 +421,251 @@
     </div>
   </div>
 </div>
+}
+
+<!-- ===================== receipts ===================== -->
+@if (view() === 'receipts') {
+  <div class="syp-card syp-card--flush">
+    @if (receiptsLoading()) {
+      <div style="padding: 16px">
+        @for (n of [0, 1, 2, 3]; track n) {
+          <div class="syp-skeleton" style="height: 48px; margin-bottom: 8px"></div>
+        }
+      </div>
+    } @else if (receiptsError()) {
+      <div class="syp-notice" role="alert" style="margin: 16px">
+        <span>{{ receiptsError() }}</span>
+      </div>
+    } @else if (!receipts().length) {
+      <div class="syp-empty">
+        <div class="syp-empty__title">No receipts yet</div>
+        <p class="syp-sub">Scan a receipt and save it — it will appear here with its line items.</p>
+        <a class="syp-btn syp-btn--primary" routerLink="/scan-receipt">Scan a receipt</a>
+      </div>
+    } @else {
+      <div class="syp-table-wrap">
+        <table class="syp-table ledger-receipts">
+          <thead>
+            <tr>
+              <th scope="col" style="width: 56px">SL.</th>
+              <th scope="col">Shop name</th>
+              <th scope="col">Invoice</th>
+              <th scope="col">Date</th>
+              <th scope="col" class="syp-right">Total payable</th>
+              <th scope="col" class="syp-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (receipt of receipts(); track receipt.id; let i = $index) {
+              <tr
+                class="ledger-receipt-row"
+                [class.is-open]="isExpanded(receipt.id)"
+                (click)="toggleReceipt(receipt.id)"
+                [attr.aria-expanded]="isExpanded(receipt.id)"
+                tabindex="0"
+                (keydown.enter)="toggleReceipt(receipt.id)"
+                (keydown.space)="toggleReceipt(receipt.id); $event.preventDefault()"
+                role="button"
+              >
+                <td class="syp-muted">{{ i + 1 }}</td>
+                <td class="syp-table__title">{{ receipt.merchant || '—' }}</td>
+                <td class="syp-muted">{{ receipt.invoiceNo || '—' }}</td>
+                <td class="syp-muted">{{ shortDate(receipt.date) }}</td>
+                <td class="syp-right" style="font-weight: 600">{{ money(receipt.netPayable) }}</td>
+                <td class="syp-right">
+                  <span class="ledger-expand">
+                    {{ isExpanded(receipt.id) ? 'Hide' : 'Click to expand' }}
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                      [class.is-open]="isExpanded(receipt.id)"
+                    >
+                      <path d="M6 9l6 6 6-6"></path>
+                    </svg>
+                  </span>
+                </td>
+              </tr>
+
+              @if (isExpanded(receipt.id)) {
+                <tr class="ledger-detail-row">
+                  <td colspan="6">
+                    <div class="ledger-detail">
+                      <div class="ledger-detail__meta">
+                        <span>Gross {{ money(receipt.grossTotal) }}</span>
+                        <span>Discount {{ money(receipt.discount) }}</span>
+                        <span>Net payable {{ money(receipt.netPayable) }}</span>
+                        <span>{{ receipt.totalItems }} item{{ receipt.totalItems === 1 ? '' : 's' }}</span>
+                      </div>
+
+                      @if (!receipt.expenses.length) {
+                        <p class="syp-sub" style="margin: 8px 0 0">
+                          This receipt has no line items recorded.
+                        </p>
+                      } @else {
+                        <table class="syp-table ledger-detail__table">
+                          <thead>
+                            <tr>
+                              <th scope="col">Name</th>
+                              <th scope="col" class="syp-right">Qty</th>
+                              <th scope="col" class="syp-right">Unit</th>
+                              <th scope="col" class="syp-right">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            @for (line of receipt.expenses; track line.id) {
+                              <tr>
+                                <td>
+                                  {{ line.title }}
+                                  <span class="syp-pill ledger-cat">{{ line.categoryName }}</span>
+                                </td>
+                                <td class="syp-right">{{ line.quantity ?? '—' }}</td>
+                                <td class="syp-right syp-muted">{{ money(line.unitPrice) }}</td>
+                                <td class="syp-right" style="font-weight: 600">{{ money(line.amount) }}</td>
+                              </tr>
+                            }
+                          </tbody>
+                        </table>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="syp-table-foot">
+        <div>{{ receipts().length }} receipt{{ receipts().length === 1 ? '' : 's' }}</div>
+      </div>
+
+      <div class="syp-grand-total">
+        <span class="syp-grand-total__label">Receipts total</span>
+        <span class="syp-grand-total__value">{{ money(receiptsTotal()) }}</span>
+      </div>
+    }
+  </div>
+}
+
+<!-- ===================== edit modal ===================== -->
+@if (editDraft(); as draft) {
+  <div class="ledger-modal" role="dialog" aria-modal="true" aria-label="Edit expense">
+    <div class="ledger-modal__backdrop" (click)="cancelEdit()"></div>
+
+    <div class="syp-card syp-card--pad ledger-modal__body">
+      <div class="syp-card-head">
+        <div class="syp-h2">Edit expense</div>
+        <button type="button" class="ledger-icon-btn" aria-label="Close" (click)="cancelEdit()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      @if (editError()) {
+        <div class="syp-notice" role="alert"><span>{{ editError() }}</span></div>
+      }
+
+      <div class="syp-field">
+        <label class="syp-label" for="ed-title">Name</label>
+        <input
+          id="ed-title"
+          type="text"
+          class="syp-input"
+          [value]="draft.title"
+          (input)="patchDraft({ title: $any($event.target).value })"
+        />
+      </div>
+
+      <div class="syp-field">
+        <label class="syp-label" for="ed-cat">Category</label>
+        <select
+          id="ed-cat"
+          class="syp-select"
+          style="width: 100%"
+          [value]="draft.categoryId ?? ''"
+          (change)="patchDraft({ categoryId: $any($event.target).value ? +$any($event.target).value : null })"
+        >
+          <option value="">Uncategorised</option>
+          @for (cat of categories(); track cat.id) {
+            <option [value]="cat.id">{{ cat.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="syp-split" style="margin-bottom: 14px">
+        <div>
+          <label class="syp-label" for="ed-qty">Quantity</label>
+          <input
+            id="ed-qty"
+            type="number"
+            class="syp-input"
+            step="0.01"
+            min="0"
+            [value]="draft.quantity ?? ''"
+            (input)="patchDraft({ quantity: $any($event.target).value === '' ? null : +$any($event.target).value })"
+          />
+        </div>
+        <div>
+          <label class="syp-label" for="ed-unit">Unit price</label>
+          <input
+            id="ed-unit"
+            type="number"
+            class="syp-input"
+            step="0.01"
+            min="0"
+            [value]="draft.unitPrice ?? ''"
+            (input)="patchDraft({ unitPrice: $any($event.target).value === '' ? null : +$any($event.target).value })"
+          />
+        </div>
+      </div>
+
+      <div class="syp-split" style="margin-bottom: 18px">
+        <div>
+          <label class="syp-label" for="ed-amt">Amount</label>
+          <input
+            id="ed-amt"
+            type="number"
+            class="syp-input"
+            step="0.01"
+            min="0"
+            [value]="draft.amount ?? ''"
+            (input)="patchDraft({ amount: $any($event.target).value === '' ? null : +$any($event.target).value })"
+          />
+        </div>
+        <div>
+          <label class="syp-label" for="ed-date">Date</label>
+          <input
+            id="ed-date"
+            type="date"
+            class="syp-input"
+            [value]="draft.date"
+            (input)="patchDraft({ date: $any($event.target).value })"
+          />
+        </div>
+      </div>
+
+      <div class="syp-row" style="gap: 12px">
+        <button
+          type="button"
+          class="syp-btn syp-btn--primary"
+          style="flex: 1"
+          [disabled]="editSaving()"
+          (click)="saveEdit()"
+        >
+          {{ editSaving() ? 'Saving…' : 'Save changes' }}
+        </button>
+        <button type="button" class="syp-btn syp-btn--quiet" (click)="cancelEdit()">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+}

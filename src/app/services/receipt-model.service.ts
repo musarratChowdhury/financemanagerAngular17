@@ -5,6 +5,7 @@ import {
   GeminiOutcome,
   ReceiptScannerService,
 } from './receipt-scanner.service';
+import { SETTING_KEYS, SettingsService } from './settings.service';
 
 const MODEL_KEY = 'syp-receipt-model';
 const TESTS_KEY = 'syp-receipt-model-tests';
@@ -44,13 +45,20 @@ export interface SweepState {
 /**
  * The receipt-scan model choice, and the availability sweep that maintains it.
  *
- * Everything lives in localStorage per browser: the API stays stateless and the
- * choice follows the device, not the account. Sign-out clears storage, so a
- * signed-out browser leaves no trace of the setting.
+ * The choice is stored on the server (`Settings` table, key `ReceiptScanModel`)
+ * so it follows the account rather than the browser — that is what makes
+ * "save the model, sign in on another device, it is still selected" work.
+ * `localStorage` is only a write-through cache: it keeps the choice available
+ * before the first request completes, and while the API is unreachable.
+ *
+ * An automatic sweep winner is deliberately **not** written to the server. It is
+ * a device-local hint, so one browser probing a catalogue cannot overwrite the
+ * model another device explicitly chose.
  */
 @Injectable({ providedIn: 'root' })
 export class ReceiptModelService {
   private readonly scanner = inject(ReceiptScannerService);
+  private readonly settings = inject(SettingsService);
 
   readonly saved = signal<SavedReceiptModel | null>(readJson<SavedReceiptModel>(MODEL_KEY));
   readonly tests = signal<Record<string, ModelTestRecord>>(
@@ -76,13 +84,45 @@ export class ReceiptModelService {
 
   /* --------------------------------------------------------------- choices */
 
-  saveManual(model: string): void {
+  /**
+   * The account-wide choice, fetched once per session. A value stored on the
+   * server is by definition an explicit choice, so it adopts the `manual`
+   * source and the sweep will not replace it.
+   *
+   * Returns the model it adopted, or null when the server has none. Never
+   * throws: a failed read must not break the app, it just leaves the cache in
+   * charge.
+   */
+  async loadFromServer(): Promise<string | null> {
+    try {
+      const model = await this.settings.getString(SETTING_KEYS.receiptScanModel);
+      if (!model) return null;
+
+      const current = this.saved();
+      if (current?.model === model && current.source === 'manual') return model;
+
+      this.persist({ model, source: 'manual', savedAt: new Date().toISOString() });
+      return model;
+    } catch {
+      // Offline or the API is older than this screen: keep the cached choice.
+      return null;
+    }
+  }
+
+  /**
+   * Saves the model for the account. The local cache is updated first so the UI
+   * and any scan in flight use it immediately; the returned promise rejects when
+   * the server write failed, so the caller can say so.
+   */
+  async saveManual(model: string): Promise<void> {
     this.persist({ model, source: 'manual', savedAt: new Date().toISOString() });
+    await this.settings.setString(SETTING_KEYS.receiptScanModel, model);
   }
 
   /**
    * Adopts an automatically discovered model — but never on top of a manual
    * choice, which is the one thing the user asked us not to second-guess.
+   * Local only: this is not written to the account setting.
    * Returns true when the choice actually changed.
    */
   saveAuto(model: string): boolean {
@@ -94,9 +134,11 @@ export class ReceiptModelService {
     return true;
   }
 
-  clear(): void {
+  /** Drops both the account setting and the cache, so the server default applies. */
+  async clear(): Promise<void> {
     this.saved.set(null);
     remove(MODEL_KEY);
+    await this.settings.remove(SETTING_KEYS.receiptScanModel);
   }
 
   /* ----------------------------------------------------------- test records */

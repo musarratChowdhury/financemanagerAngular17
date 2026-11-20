@@ -49,6 +49,8 @@ export class SettingsComponent implements OnInit {
   readonly testing = signal(false);
   readonly test = signal<TestOutcome | null>(null);
   readonly flash = signal('');
+  readonly saveError = signal('');
+  readonly saving = signal(false);
   readonly customFile = signal<File | null>(null);
 
   /** The model a scan will use right now. */
@@ -111,7 +113,14 @@ export class SettingsComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    void this.loadSavedChoice();
     void this.loadCatalogue();
+  }
+
+  /** The account-wide choice wins over whatever the cache had. */
+  private async loadSavedChoice(): Promise<void> {
+    const stored = await this.models.loadFromServer();
+    if (stored) this.selected.set(stored);
   }
 
   async loadCatalogue(): Promise<void> {
@@ -152,19 +161,47 @@ export class SettingsComponent implements OnInit {
     this.selected.set(name);
     this.test.set(null);
     this.flash.set('');
+    this.saveError.set('');
   }
 
-  save(): void {
+  /** Saves the choice to the account, then reports what happened. */
+  async save(): Promise<void> {
     const model = this.selected();
-    if (!model) return;
-    this.models.saveManual(model);
-    this.flash.set(`${model} will be used for receipt scans on this device.`);
+    if (!model || this.saving()) return;
+
+    this.saving.set(true);
+    this.flash.set('');
+    this.saveError.set('');
+
+    try {
+      await this.models.saveManual(model);
+      this.flash.set(`${model} is saved for receipt scans on every device.`);
+    } catch {
+      this.saveError.set(
+        `Could not save ${model} to your account. It is still used on this device.`
+      );
+    } finally {
+      this.saving.set(false);
+    }
   }
 
-  useServerDefault(): void {
-    this.models.clear();
-    this.selected.set(this.catalogue()?.defaultModel ?? '');
-    this.flash.set('Cleared your choice — the server default is in use.');
+  /** Drops the account choice so the server's configured default applies. */
+  async useServerDefault(): Promise<void> {
+    if (this.saving()) return;
+
+    this.saving.set(true);
+    this.flash.set('');
+    this.saveError.set('');
+
+    try {
+      await this.models.clear();
+      this.selected.set(this.catalogue()?.defaultModel ?? '');
+      this.flash.set('Cleared your choice — the server default is in use.');
+    } catch {
+      this.saveError.set('Could not clear the saved model. Try again.');
+    } finally {
+      this.saving.set(false);
+    }
   }
 
   useSuggestion(): void {

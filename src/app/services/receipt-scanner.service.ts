@@ -12,6 +12,8 @@ export interface ReceiptScanItem {
 
 export interface ReceiptScanResult {
   merchant: string | null;
+  /** Invoice / bill number, when the receipt prints one. */
+  invoiceNo: string | null;
   date: string | null;
   currency: string | null;
   items: ReceiptScanItem[];

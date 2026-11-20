@@ -4,16 +4,17 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
-import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ReceiptModelService } from '../../../services/receipt-model.service';
+import { ReceiptService } from '../../../services/receipt.service';
 import {
   ReceiptScanError,
   ReceiptScanResult,
   ReceiptScannerService,
 } from '../../../services/receipt-scanner.service';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
-import { money, moneyExact, isoUtcDate, longDate } from '../../../_helpers/money';
+import { Receipt } from '../../../../models/Receipt';
+import { money, moneyExact, isoDate, isoUtcDate, longDate } from '../../../_helpers/money';
 
 interface CategoryOption {
   id: number;
@@ -79,8 +80,16 @@ export class ScanReceiptComponent implements OnInit {
   /* ------------------------------------------------------------- review */
 
   shop = '';
+  invoiceNo = '';
   date: Date = new Date();
+  /** Time printed on the receipt, `HH:mm`. Empty when the scan found none. */
+  receiptTime = '';
   categoryId: number | null = null;
+  /** Total before discounts, as printed. */
+  grossTotal: number | null = null;
+  /** Discount applied, 0 when the receipt has none. */
+  discount: number | null = null;
+  /** Amount actually payable after the discount — the number that becomes the expense total. */
   total: number | null = null;
 
   readonly categories = signal<CategoryOption[]>([]);
@@ -134,9 +143,9 @@ export class ScanReceiptComponent implements OnInit {
   }
 
   constructor(
-    private expenseService: ExpenseService,
     private expenseCategoryService: ExpenseCategoryService,
     private receiptScanner: ReceiptScannerService,
+    private receiptService: ReceiptService,
     private receiptModels: ReceiptModelService,
     private router: Router
   ) {}
@@ -219,11 +228,27 @@ export class ScanReceiptComponent implements OnInit {
     try {
       const parsed = await this.receiptScanner.recognize(file, requested);
       if (parsed.merchant) this.shop = parsed.merchant;
+      if (parsed.invoiceNo) this.invoiceNo = parsed.invoiceNo;
       if (parsed.date) {
         const date = new Date(parsed.date);
-        if (!Number.isNaN(date.getTime())) this.date = date;
+        if (!Number.isNaN(date.getTime())) {
+          this.date = date;
+          // Only offer a time when the receipt actually printed one; a scan that
+          // found just a date comes back as midnight.
+          const hours = date.getUTCHours();
+          const minutes = date.getUTCMinutes();
+          this.receiptTime =
+            hours || minutes
+              ? `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+              : '';
+        }
       }
+      // Net payable is what was actually charged; gross is before the discount.
       if (parsed.total != null) this.total = parsed.total;
+      if (parsed.discount != null) this.discount = parsed.discount;
+      this.grossTotal =
+        parsed.subtotal ??
+        (parsed.total != null ? parsed.total + (parsed.discount ?? 0) : null);
       this.usedModel.set(parsed.modelUsed ?? requested ?? '');
       this.items.set(
         (parsed.items ?? []).map((item) => ({
@@ -364,8 +389,12 @@ export class ScanReceiptComponent implements OnInit {
     this.fileName.set('');
     this.previewUrl.set(null);
     this.shop = '';
+    this.invoiceNo = '';
     this.date = new Date();
+    this.receiptTime = '';
     this.categoryId = null;
+    this.grossTotal = null;
+    this.discount = null;
     this.total = null;
     this.items.set([]);
     this.saveError.set('');
@@ -379,7 +408,7 @@ export class ScanReceiptComponent implements OnInit {
   }
 
   save(): void {
-    if (!this.canSave) return;
+    if (!this.canSave || this.saving()) return;
 
     this.saving.set(true);
     this.saveError.set('');
@@ -390,7 +419,7 @@ export class ScanReceiptComponent implements OnInit {
 
     // One expense per line item keeps the ledger meaningful; with no line items
     // the whole receipt becomes a single expense.
-    const payloads = items.length
+    const expenses = items.length
       ? items.map((item) => ({
           cause: item.name.trim(),
           amount: item.amount ?? (item.qty ?? 1) * (item.unitPrice ?? 0),
@@ -410,37 +439,60 @@ export class ScanReceiptComponent implements OnInit {
           },
         ];
 
-    let remaining = payloads.length;
-    let failed = false;
+    const netPayable = this.total!;
+    const grossTotal = this.grossTotal ?? netPayable + (this.discount ?? 0);
 
-    for (const payload of payloads) {
-      this.expenseService.create(payload as any).subscribe({
-        next: () => {
-          remaining--;
-          if (remaining === 0) this.finish(failed);
-        },
-        error: () => {
-          failed = true;
-          remaining--;
-          if (remaining === 0) this.finish(failed);
-        },
-      });
-    }
+    // One request for the receipt and all of its line items, so the server can
+    // write them in a single save. The old per-item loop left half a receipt
+    // behind whenever one request failed, and retrying duplicated the rest.
+    const receipt: Receipt = {
+      merchant: this.shop.trim() || null,
+      invoiceNo: this.invoiceNo.trim() || null,
+      grossTotal,
+      discount: this.discount ?? 0,
+      netPayable,
+      totalItems: expenses.length,
+      receiptDateTime: this.receiptDateTimeIso(),
+      expenses,
+    };
+
+    this.receiptService.create(receipt).subscribe({
+      next: () => {
+        this.saving.set(false);
+        const previous = this.previewUrl();
+        if (previous) URL.revokeObjectURL(previous);
+        this.router.navigate(['/expenses']);
+      },
+      error: (error) => {
+        console.error('Receipt save failed:', error);
+        this.saving.set(false);
+        // Nothing is written on failure, so the message can be honest about it.
+        this.saveError.set(
+          error?.error?.message ??
+            error?.message ??
+            'The receipt could not be saved. Nothing was written — check the API and try again.'
+        );
+      },
+    });
   }
 
-  private finish(failed: boolean): void {
-    this.saving.set(false);
+  /**
+   * The receipt's date and time as an ISO instant.
+   *
+   * The date comes from `isoDate()` (a plain `yyyy-MM-dd`) so the picked day is
+   * stored exactly as chosen rather than being shifted by the browser's offset —
+   * the same convention the expense date uses. The time, when the receipt printed
+   * one, is appended verbatim.
+   */
+  private receiptDateTimeIso(): string {
+    const day = isoDate(this.date);
+    const match = /^(\d{1,2}):(\d{2})$/.exec(this.receiptTime.trim());
 
-    if (failed) {
-      this.saveError.set(
-        'Some of these expenses could not be saved. Check the ledger before retrying.'
-      );
-      return;
+    if (!match) {
+      return `${day}T00:00:00.000Z`;
     }
 
-    const previous = this.previewUrl();
-    if (previous) URL.revokeObjectURL(previous);
-
-    this.router.navigate(['/expenses']);
+    const hours = match[1].padStart(2, '0');
+    return `${day}T${hours}:${match[2]}:00.000Z`;
   }
 }

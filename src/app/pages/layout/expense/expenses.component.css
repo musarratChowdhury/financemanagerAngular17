@@ -50,3 +50,223 @@
     padding: 0 24px;
   }
 }
+
+/* ---------------------------------------------------------- view switch */
+
+.ledger-switch {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ledger-switch__options {
+  display: inline-flex;
+  padding: 4px;
+  gap: 4px;
+  border: 1px solid var(--syp-border);
+  border-radius: 999px;
+  background: var(--syp-surface, transparent);
+}
+
+.ledger-switch__btn {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--syp-muted, #6b7280);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ledger-switch__btn:hover {
+  color: var(--syp-text, #111827);
+}
+
+.ledger-switch__btn.is-active {
+  background: var(--syp-accent, #111827);
+  color: #fff;
+}
+
+.ledger-switch__btn:focus-visible {
+  outline: 2px solid var(--syp-focus, #2563eb);
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------- grouping */
+
+.ledger-group {
+  border-bottom: 1px solid var(--syp-border);
+}
+
+.ledger-group:last-of-type {
+  border-bottom: 0;
+}
+
+.ledger-group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.ledger-group__title {
+  font-weight: 650;
+}
+
+.ledger-group__sub {
+  font-size: 12.5px;
+  margin-top: 2px;
+}
+
+.ledger-group__total {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- actions */
+
+.ledger-actions {
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.ledger-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--syp-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--syp-text, #111827);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.ledger-icon-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.ledger-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ledger-icon-btn--danger:hover:not(:disabled) {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.ledger-icon-btn:focus-visible {
+  outline: 2px solid var(--syp-focus, #2563eb);
+  outline-offset: 2px;
+}
+
+.ledger-cat {
+  margin-left: 8px;
+  font-size: 11px;
+  vertical-align: middle;
+}
+
+/* ------------------------------------------------------------- receipts */
+
+.ledger-receipt-row {
+  cursor: pointer;
+}
+
+.ledger-receipt-row:hover {
+  background: rgba(0, 0, 0, 0.025);
+}
+
+.ledger-receipt-row.is-open {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ledger-receipt-row:focus-visible {
+  outline: 2px solid var(--syp-focus, #2563eb);
+  outline-offset: -2px;
+}
+
+.ledger-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--syp-muted, #6b7280);
+  white-space: nowrap;
+}
+
+.ledger-expand svg {
+  transition: transform 0.15s ease;
+}
+
+.ledger-expand svg.is-open {
+  transform: rotate(180deg);
+}
+
+.ledger-detail-row > td {
+  padding: 0;
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.ledger-detail {
+  padding: 14px 16px 18px;
+}
+
+.ledger-detail__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 12.5px;
+  color: var(--syp-muted, #6b7280);
+  margin-bottom: 10px;
+}
+
+.ledger-detail__table {
+  background: transparent;
+}
+
+.ledger-detail__table th,
+.ledger-detail__table td {
+  font-size: 13.5px;
+}
+
+/* ---------------------------------------------------------------- modal */
+
+.ledger-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ledger-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.ledger-modal__body {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+

@@ -7,11 +7,15 @@ import { StorageService } from '../../../services/storage.service';
 /**
  * Sticky phone app bar. Mirrors the mobile frame: brand mark on the left, the
  * screen's own title beside it, and a single account affordance on the right.
+ *
+ * `RouterLink` must stay in `imports`: the settings affordance uses a static
+ * `routerLink="/settings"`, which Angular silently ignores when the directive
+ * is missing — the anchor renders without an href and the tap does nothing.
  */
 @Component({
   selector: 'app-mobilebar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './mobilebar.component.html',
   styleUrl: './mobilebar.component.css',
 })

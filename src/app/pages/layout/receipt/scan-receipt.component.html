@@ -254,7 +254,18 @@
 
     <div class="syp-split" style="margin-bottom: 14px">
       <div>
-        <label class="syp-label" for="sr-date">Date</label>
+        <label class="syp-label" for="sr-invoice">Invoice no.</label>
+        <input
+          id="sr-invoice"
+          type="text"
+          class="syp-input"
+          placeholder="Optional — if the receipt has one"
+          [(ngModel)]="invoiceNo"
+        />
+      </div>
+
+      <div>
+        <label class="syp-label" for="sr-date">Date &amp; time</label>
         <ejs-datepicker
           id="sr-date"
           [value]="date"
@@ -263,17 +274,59 @@
           (change)="date = $any($event).value ?? date"
         ></ejs-datepicker>
       </div>
+    </div>
 
+    <div class="syp-field">
+      <label class="syp-label" for="sr-time">Time</label>
+      <input
+        id="sr-time"
+        type="time"
+        class="syp-input"
+        [(ngModel)]="receiptTime"
+      />
+      <div class="syp-label__hint">
+        Filled from the receipt when it prints a time; optional otherwise.
+      </div>
+    </div>
+
+    <div class="syp-split" style="margin-bottom: 14px">
       <div>
-        <label class="syp-label" for="sr-total">Total</label>
+        <label class="syp-label" for="sr-gross">Gross total</label>
         <ejs-numerictextbox
-          id="sr-total"
-          [value]="total ?? undefined"
+          id="sr-gross"
+          [value]="grossTotal ?? undefined"
           [min]="0"
           [showSpinButton]="false"
           width="100%"
-          (change)="total = $any($event).value"
+          (change)="grossTotal = $any($event).value"
         ></ejs-numerictextbox>
+      </div>
+
+      <div>
+        <label class="syp-label" for="sr-discount">Discount</label>
+        <ejs-numerictextbox
+          id="sr-discount"
+          [value]="discount ?? undefined"
+          [min]="0"
+          [showSpinButton]="false"
+          width="100%"
+          (change)="discount = $any($event).value"
+        ></ejs-numerictextbox>
+      </div>
+    </div>
+
+    <div class="syp-field">
+      <label class="syp-label" for="sr-total">Net payable</label>
+      <ejs-numerictextbox
+        id="sr-total"
+        [value]="total ?? undefined"
+        [min]="0"
+        [showSpinButton]="false"
+        width="100%"
+        (change)="total = $any($event).value"
+      ></ejs-numerictextbox>
+      <div class="syp-label__hint">
+        What was actually paid, after the discount. This is the amount saved to the ledger.
       </div>
     </div>
 

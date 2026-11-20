@@ -40,17 +40,18 @@ export class ExpenseService {
       .pipe(catchError(this.handleError));
   }
 
-  // Update an item by ID
+  // Update an item by ID — the controller exposes `api/Expense/Update/{id}`,
+  // not `api/Expense/{id}`.
   update(id: number, data: any): Observable<any> {
     return this.http
-      .put(`${API_URL}/${id}`, data, httpOptions)
+      .put(`${API_URL}Update/${id}`, data, httpOptions)
       .pipe(catchError(this.handleError));
   }
 
-  // Delete an item by ID
+  // Delete an item by ID — `api/Expense/Delete/{id}`.
   delete(id: number): Observable<any> {
     return this.http
-      .delete(`${API_URL}/${id}`, httpOptions)
+      .delete(`${API_URL}Delete/${id}`, httpOptions)
       .pipe(catchError(this.handleError));
   }
 

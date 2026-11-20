@@ -5,6 +5,27 @@ import {
   GeminiProbeResponse,
   ReceiptScannerService,
 } from './receipt-scanner.service';
+import { SettingsService } from './settings.service';
+
+/** In-memory stand-in for the account-wide settings API. */
+class SettingsStub {
+  readonly values = new Map<string, string>();
+  failWrites = false;
+
+  async getString(key: string): Promise<string | null> {
+    const stored = this.values.get(key);
+    return stored === undefined ? null : (JSON.parse(stored) as string);
+  }
+
+  async setString(key: string, value: string): Promise<void> {
+    if (this.failWrites) throw new Error('API unavailable');
+    this.values.set(key, JSON.stringify(value));
+  }
+
+  async remove(key: string): Promise<void> {
+    this.values.delete(key);
+  }
+}
 
 /** Stub of the API client, so the service's rules can be tested without HTTP. */
 class ScannerStub {
@@ -82,15 +103,18 @@ function model(name: string, generateContent = true) {
 describe('ReceiptModelService', () => {
   let service: ReceiptModelService;
   let scanner: ScannerStub;
+  let settings: SettingsStub;
 
   beforeEach(() => {
     localStorage.clear();
     scanner = new ScannerStub();
+    settings = new SettingsStub();
 
     TestBed.configureTestingModule({
       providers: [
         ReceiptModelService,
         { provide: ReceiptScannerService, useValue: scanner },
+        { provide: SettingsService, useValue: settings },
       ],
     });
 
@@ -229,11 +253,71 @@ describe('ReceiptModelService', () => {
     expect(scanner.lastProbeModels).toBeNull();
   });
 
-  it('clears the choice so the server default applies again', () => {
-    service.saveManual('gemini-3.8-flash');
-    service.clear();
+  it('clears the choice so the server default applies again', async () => {
+    await service.saveManual('gemini-3.8-flash');
+    await service.clear();
 
     expect(service.model()).toBeNull();
     expect(localStorage.getItem('syp-receipt-model')).toBeNull();
+    expect(settings.values.size).toBe(0);
+  });
+
+  /* ------------------------------------------------------- account storage */
+
+  it('writes a manual choice to the account setting', async () => {
+    await service.saveManual('gemini-3.8-flash');
+
+    expect(await settings.getString('ReceiptScanModel')).toBe('gemini-3.8-flash');
+  });
+
+  it('restores the account choice after a reload and treats it as manual', async () => {
+    settings.values.set('ReceiptScanModel', JSON.stringify('gemini-3.8-flash'));
+
+    const adopted = await service.loadFromServer();
+
+    expect(adopted).toBe('gemini-3.8-flash');
+    expect(service.model()).toBe('gemini-3.8-flash');
+    expect(service.saved()?.source).toBe('manual');
+  });
+
+  it('keeps the cached choice when the settings API is unreachable', async () => {
+    const original = settings.getString;
+    settings.getString = async () => {
+      throw new Error('offline');
+    };
+
+    const adopted = await service.loadFromServer();
+
+    expect(adopted).toBeNull();
+    settings.getString = original;
+  });
+
+  it('does not let the sweep overwrite the account choice', async () => {
+    settings.values.set('ReceiptScanModel', JSON.stringify('gemma-4-26b-a4b-it'));
+    await service.loadFromServer();
+    scanner.probeResult = { ...scanner.probeResult, winner: 'gemini-3.8-flash' };
+
+    await service.runSweep(true);
+
+    expect(service.model()).toBe('gemma-4-26b-a4b-it');
+    expect(await settings.getString('ReceiptScanModel')).toBe('gemma-4-26b-a4b-it');
+  });
+
+  it('keeps an automatic winner local, so it cannot overwrite another device', async () => {
+    scanner.probeResult = { ...scanner.probeResult, winner: 'gemini-3.8-flash' };
+
+    await service.runSweep();
+
+    expect(service.saved()?.model).toBe('gemini-3.8-flash');
+    expect(service.saved()?.source).toBe('auto');
+    expect(settings.values.size).toBe(0);
+  });
+
+  it('rejects when the account write fails, but keeps the local choice', async () => {
+    settings.failWrites = true;
+
+    await expectAsync(service.saveManual('gemini-3.8-flash')).toBeRejected();
+
+    expect(service.model()).toBe('gemini-3.8-flash');
   });
 });

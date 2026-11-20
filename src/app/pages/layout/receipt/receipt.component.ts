@@ -132,19 +132,25 @@ export class ReceiptComponent implements OnInit {
 
   onReceiptSubmit() {
     if (this.checkReceiptValidity()) {
-      let grandTotal = 0;
-      this.expenseList.forEach((x) => (grandTotal = grandTotal + x.Amount));
-      let TotalItems = this.expenseList.length;
-      let expenseDate = this.expenseList[0].ExpenseDate;
-      let newReceipt = new Receipt(
-        0,
-        grandTotal,
-        TotalItems,
-        expenseDate,
-        new Date(),
-        this.generateGUID(),
-        this.expenseList
-      );
+      const grossTotal = this.expenseList.reduce((sum, x) => sum + x.Amount, 0);
+      const expenseDate = this.expenseList[0].ExpenseDate;
+      const newReceipt: Receipt = {
+        merchant: null,
+        invoiceNo: null,
+        grossTotal,
+        discount: 0,
+        netPayable: grossTotal,
+        totalItems: this.expenseList.length,
+        receiptDateTime: expenseDate.toISOString(),
+        expenses: this.expenseList.map((x) => ({
+          cause: x.Cause,
+          amount: x.Amount,
+          quantity: x.Quantity,
+          unitPrice: x.UnitPrice,
+          expenseDate: x.ExpenseDate.toISOString(),
+          expenseCategoryId: x.ExpenseCategoryId,
+        })),
+      };
 
       this.receiptService.create(newReceipt).subscribe({
         next: (data) => {

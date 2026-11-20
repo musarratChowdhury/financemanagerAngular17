@@ -96,7 +96,7 @@
     <div>
       <div class="syp-h2">Receipt model</div>
       <div class="syp-sub" style="font-size: 13px">
-        Applies to this device. Signing out clears it.
+        Saved to your account, so every device uses the same model.
       </div>
     </div>
     @if (saved(); as savedModel) {
@@ -165,8 +165,13 @@
   </div>
 
   <div class="settings-actions">
-    <button class="syp-btn syp-btn--primary" type="button" (click)="save()" [disabled]="!selected()">
-      Save for receipt scans
+    <button
+      class="syp-btn syp-btn--primary"
+      type="button"
+      (click)="save()"
+      [disabled]="!selected() || saving()"
+    >
+      {{ saving() ? 'Saving…' : 'Save for receipt scans' }}
     </button>
     <button
       class="syp-btn syp-btn--quiet"
@@ -176,10 +181,21 @@
     >
       {{ testing() ? 'Testing…' : 'Test on a receipt' }}
     </button>
-    <button class="syp-btn syp-btn--ghost" type="button" (click)="useServerDefault()">
+    <button
+      class="syp-btn syp-btn--ghost"
+      type="button"
+      (click)="useServerDefault()"
+      [disabled]="saving()"
+    >
       Use server default
     </button>
   </div>
+
+  @if (saveError()) {
+  <div class="syp-notice" role="alert" style="margin-top: 12px">
+    <span>{{ saveError() }}</span>
+  </div>
+  }
 
   @if (flash()) {
   <div class="syp-notice syp-notice--good" role="status" style="margin-top: 12px">
