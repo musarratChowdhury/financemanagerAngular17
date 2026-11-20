@@ -8,7 +8,7 @@ import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
 import { ReceiptService } from '../../../services/receipt.service';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
-import { money, shortDate, isoUtcDate, isoDate } from '../../../_helpers/money';
+import { money, shortDate, shortDateWithYear, isoUtcDate, isoDate } from '../../../_helpers/money';
 
 interface CategoryOption {
   id: number;
@@ -119,6 +119,8 @@ function sortComparator<T>(
 export class ExpensesComponent implements OnInit {
   readonly money = money;
   readonly shortDate = shortDate;
+  /** Ledger date cells carry the year, so 2023 and 2026 rows are distinguishable. */
+  readonly shortDateWithYear = shortDateWithYear;
 
   /* ------------------------------------------------------------------ form */
 

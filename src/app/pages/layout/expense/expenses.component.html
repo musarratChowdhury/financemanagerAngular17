@@ -302,7 +302,7 @@
                     <td class="syp-right">{{ row.quantity ?? '—' }}</td>
                     <td class="syp-right syp-muted">{{ money(row.unitPrice) }}</td>
                     <td class="syp-right" style="font-weight: 600">{{ money(row.amount) }}</td>
-                    <td class="syp-right syp-muted">{{ shortDate(row.date) }}</td>
+                    <td class="syp-right syp-muted">{{ shortDateWithYear(row.date) }}</td>
                     <td class="syp-right">
                       <div class="ledger-actions">
                         <button
@@ -368,7 +368,7 @@
                 <td class="syp-right">{{ row.quantity ?? '—' }}</td>
                 <td class="syp-right syp-muted">{{ money(row.unitPrice) }}</td>
                 <td class="syp-right" style="font-weight: 600">{{ money(row.amount) }}</td>
-                <td class="syp-right syp-muted">{{ shortDate(row.date) }}</td>
+                <td class="syp-right syp-muted">{{ shortDateWithYear(row.date) }}</td>
                 <td class="syp-right">
                   <div class="ledger-actions">
                     <button

@@ -51,6 +51,21 @@ export function shortDate(value: Date | string | null | undefined): string {
   return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })}`;
 }
 
+/**
+ * `18 Oct,26` — a short date that still carries the year.
+ *
+ * Ledger rows span years, and `shortDate` cannot tell 2023 from 2026, so tables
+ * that list dated entries use this instead. The year is the last two digits,
+ * matching how the design reads.
+ */
+export function shortDateWithYear(value: Date | string | null | undefined): string {
+  if (!value) return '—';
+  const d = value instanceof Date ? value : new Date(value);
+  if (isNaN(d.getTime())) return '—';
+  const month = d.toLocaleString('en-US', { month: 'short' });
+  return `${d.getDate()} ${month},${`${d.getFullYear()}`.slice(-2)}`;
+}
+
 /** `18 Oct 2026` */
 export function longDate(value: Date | string | null | undefined): string {
   if (!value) return '—';
