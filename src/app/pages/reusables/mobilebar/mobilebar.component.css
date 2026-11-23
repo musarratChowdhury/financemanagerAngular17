@@ -9,3 +9,14 @@
   align-items: center;
   gap: 8px;
 }
+
+/* The current destination gets the lime accent so the bar shows where you are. */
+.syp-mobilebar__action.is-active {
+  background: var(--syp-lime);
+  border-color: var(--syp-lime-2);
+  color: var(--syp-ink);
+}
+
+.syp-mobilebar__action.is-active:hover {
+  background: var(--syp-lime-2);
+}
