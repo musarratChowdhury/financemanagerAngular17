@@ -444,6 +444,17 @@
 @if (view() === 'receipts') {
   <div class="syp-card syp-card--flush">
     <div class="syp-ledger-tools">
+      <label class="syp-sr-only" for="rc-search">Search receipts</label>
+      <input
+        id="rc-search"
+        type="search"
+        class="syp-input"
+        placeholder="Search shop, invoice or item"
+        style="max-width: 260px"
+        [value]="receiptSearch()"
+        (input)="onReceiptSearch($any($event.target).value)"
+      />
+
       <label class="syp-sr-only" for="rc-sort">Sort by</label>
       <select
         id="rc-sort"
@@ -479,6 +490,14 @@
         <p class="syp-sub">Scan a receipt and save it — it will appear here with its line items.</p>
         <a class="syp-btn syp-btn--primary" routerLink="/scan-receipt">Scan a receipt</a>
       </div>
+    } @else if (!sortedReceipts().length) {
+      <div class="syp-empty">
+        <div class="syp-empty__title">No receipts match “{{ receiptSearch() }}”</div>
+        <p class="syp-sub">Search matches the shop name, the invoice number and every line item.</p>
+        <button type="button" class="syp-btn syp-btn--quiet" (click)="onReceiptSearch('')">
+          Clear search
+        </button>
+      </div>
     } @else {
       <div class="syp-table-wrap">
         <table class="syp-table ledger-receipts">
@@ -489,7 +508,7 @@
               <th scope="col">Invoice</th>
               <th scope="col">Date</th>
               <th scope="col" class="syp-right">Total payable</th>
-              <th scope="col" class="syp-right">Action</th>
+              <th scope="col" class="syp-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -510,22 +529,51 @@
                 <td class="syp-muted">{{ shortDate(receipt.date) }}</td>
                 <td class="syp-right" style="font-weight: 600">{{ money(receipt.netPayable) }}</td>
                 <td class="syp-right">
-                  <span class="ledger-expand">
-                    {{ isExpanded(receipt.id) ? 'Hide' : 'Click to expand' }}
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                      [class.is-open]="isExpanded(receipt.id)"
-                    >
-                      <path d="M6 9l6 6 6-6"></path>
-                    </svg>
+                  <span class="ledger-actions">
+                    @if (receipt.hasImage) {
+                      <button
+                        type="button"
+                        class="ledger-icon-btn"
+                        title="View receipt photo"
+                        [attr.aria-label]="'View the receipt photo for ' + (receipt.merchant || 'receipt #' + receipt.id)"
+                        (click)="openPhoto(receipt, $event)"
+                        (keydown.enter)="openPhoto(receipt, $event)"
+                        (keydown.space)="openPhoto(receipt, $event)"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      </button>
+                    }
+
+                    <span class="ledger-expand">
+                      {{ isExpanded(receipt.id) ? 'Hide' : 'Expand' }}
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                        [class.is-open]="isExpanded(receipt.id)"
+                      >
+                        <path d="M6 9l6 6 6-6"></path>
+                      </svg>
+                    </span>
                   </span>
                 </td>
               </tr>
@@ -540,6 +588,22 @@
                         <span>Net payable {{ money(receipt.netPayable) }}</span>
                         <span>{{ receipt.totalItems }} item{{ receipt.totalItems === 1 ? '' : 's' }}</span>
                       </div>
+
+                      @if (receipt.hasImage) {
+                        <div class="syp-row" style="margin-bottom: 10px">
+                          <button
+                            type="button"
+                            class="syp-btn syp-btn--quiet syp-btn--sm"
+                            (click)="openPhoto(receipt, $event)"
+                          >
+                            View receipt photo
+                          </button>
+                        </div>
+                      } @else {
+                        <p class="syp-sub" style="margin: 0 0 10px">
+                          No photo saved for this receipt.
+                        </p>
+                      }
 
                       @if (!receipt.expenses.length) {
                         <p class="syp-sub" style="margin: 8px 0 0">
@@ -702,6 +766,68 @@
         <button type="button" class="syp-btn syp-btn--quiet" (click)="cancelEdit()">
           Cancel
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===================== receipt photo viewer ===================== -->
+@if (photoFor(); as receipt) {
+  <div class="ledger-modal" role="dialog" aria-modal="true" aria-label="Receipt photo">
+    <div class="ledger-modal__backdrop" (click)="closePhoto()"></div>
+
+    <div class="syp-card syp-card--pad ledger-modal__body ledger-photo">
+      <div class="syp-card-head">
+        <div>
+          <div class="syp-h2">{{ receipt.merchant || 'Receipt #' + receipt.id }}</div>
+          <div class="syp-sub" style="font-size: 13px">
+            {{ shortDateWithYear(receipt.date) }} · {{ money(receipt.netPayable) }}
+          </div>
+        </div>
+        <button type="button" class="ledger-icon-btn" aria-label="Close" (click)="closePhoto()">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6L6 18M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      @if (photoLoading()) {
+        <div class="syp-skeleton" style="height: 240px; border-radius: 12px"></div>
+      } @else if (photoError()) {
+        <div class="syp-notice" role="alert">
+          <span>{{ photoError() }}</span>
+        </div>
+      } @else if (photoUrl()) {
+        <img
+          class="ledger-photo__img"
+          [src]="photoUrl()"
+          [alt]="'Receipt photo for ' + (receipt.merchant || 'receipt #' + receipt.id)"
+          (error)="onPhotoLoadError()"
+        />
+      }
+
+      <div class="syp-row" style="gap: 12px; margin-top: 16px; justify-content: flex-end">
+        @if (photoUrl()) {
+          <a
+            class="syp-btn syp-btn--quiet"
+            [href]="photoUrl()"
+            target="_blank"
+            rel="noopener"
+          >
+            Open full size
+          </a>
+        }
+        <button type="button" class="syp-btn syp-btn--quiet" (click)="closePhoto()">Close</button>
       </div>
     </div>
   </div>

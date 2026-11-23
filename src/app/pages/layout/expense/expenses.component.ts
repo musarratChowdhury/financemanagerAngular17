@@ -6,6 +6,7 @@ import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseService } from '../../../services/expense.service';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
+import { ReceiptImageService } from '../../../services/receipt-image.service';
 import { ReceiptService } from '../../../services/receipt.service';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import { money, shortDate, shortDateWithYear, isoUtcDate, isoDate } from '../../../_helpers/money';
@@ -41,6 +42,8 @@ interface ReceiptLedgerRow {
   netPayable: number;
   totalItems: number;
   expenses: LedgerExpense[];
+  /** True when the API holds a softcopy for this receipt. */
+  hasImage: boolean;
 }
 
 /** Expenses bucketed by receipt, for the "group by receipts" view. */
@@ -156,6 +159,20 @@ export class ExpensesComponent implements OnInit {
   /** Receipt id whose line items are expanded; only one open at a time. */
   readonly expandedReceipt = signal<number | null>(null);
 
+  /** Free-text filter for the receipts view: shop, invoice or a line item. */
+  readonly receiptSearch = signal('');
+
+  /* ------------------------------------------------------------ receipt photo */
+
+  /** Receipt whose photo is open in the viewer, if any. */
+  readonly photoFor = signal<ReceiptLedgerRow | null>(null);
+  /** Short-lived signed URL; the bucket itself stays private. */
+  readonly photoUrl = signal<string | null>(null);
+  readonly photoLoading = signal(false);
+  readonly photoError = signal('');
+  /** One silent refetch when a cached URL has expired; a second failure is shown. */
+  private photoRetried = false;
+
   /* --------------------------------------------------------------- editing */
 
   readonly editDraft = signal<EditDraft | null>(null);
@@ -201,7 +218,29 @@ export class ExpensesComponent implements OnInit {
       (row) => row.date,
       (row) => row.netPayable
     );
-    return [...this.receipts()].sort(compare);
+    return [...this.filteredReceipts()].sort(compare);
+  });
+
+  /**
+   * The receipts view searches the whole collection client-side: the collection
+   * is already loaded, and a shop name, invoice number or a line item ("milk")
+   * are all things a user would type. Composes with the sort above.
+   */
+  readonly filteredReceipts = computed(() => {
+    const term = this.receiptSearch().trim().toLowerCase();
+    if (!term) return this.receipts();
+
+    return this.receipts().filter((receipt) => {
+      const haystack = [
+        receipt.merchant ?? '',
+        receipt.invoiceNo ?? '',
+        ...receipt.expenses.map((line) => line.title),
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return haystack.includes(term);
+    });
   });
 
   readonly pageCount = computed(() =>
@@ -285,7 +324,8 @@ export class ExpensesComponent implements OnInit {
   constructor(
     private expenseService: ExpenseService,
     private expenseCategoryService: ExpenseCategoryService,
-    private receiptService: ReceiptService
+    private receiptService: ReceiptService,
+    private receiptImageService: ReceiptImageService
   ) {}
 
   ngOnInit(): void {
@@ -348,6 +388,7 @@ export class ExpensesComponent implements OnInit {
           discount: Number(r.discount) || 0,
           netPayable: Number(r.netPayable) || 0,
           totalItems: Number(r.totalItems) || (r.expenses?.length ?? 0),
+          hasImage: r.hasImage === true,
           expenses: (r.expenses ?? []).map((e: any) => ({
             id: e.id,
             title: e.cause ?? 'Expense',
@@ -386,6 +427,7 @@ export class ExpensesComponent implements OnInit {
     this.view.set(view);
     // A receipt that was open in one view should not stay open in the other.
     this.expandedReceipt.set(null);
+    this.closePhoto();
   }
 
   toggleGrouping(): void {
@@ -399,6 +441,70 @@ export class ExpensesComponent implements OnInit {
 
   isExpanded(id: number): boolean {
     return this.expandedReceipt() === id;
+  }
+
+  /* ------------------------------------------------------------ receipt photo */
+
+  onReceiptSearch(value: string): void {
+    this.receiptSearch.set(value);
+  }
+
+  /**
+   * Opens the softcopy viewer. Stops the click/keydown from reaching the row,
+   * which would otherwise toggle the receipt's line items behind the modal.
+   */
+  openPhoto(receipt: ReceiptLedgerRow, event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    if (!receipt.hasImage) return;
+
+    this.photoFor.set(receipt);
+    this.photoUrl.set(null);
+    this.photoError.set('');
+    this.photoLoading.set(true);
+
+    this.receiptImageService.getUrl(receipt.id).subscribe({
+      next: (response) => {
+        this.photoUrl.set(response.url);
+        this.photoLoading.set(false);
+      },
+      error: (error) => {
+        this.photoLoading.set(false);
+        this.photoError.set(
+          error?.status === 404
+            ? 'No photo saved for this receipt.'
+            : 'The receipt photo could not be loaded. Please try again.'
+        );
+      },
+    });
+  }
+
+  closePhoto(): void {
+    this.photoFor.set(null);
+    this.photoUrl.set(null);
+    this.photoError.set('');
+    this.photoLoading.set(false);
+    this.photoRetried = false;
+  }
+
+  /**
+   * A presigned URL lives five minutes, so a modal left open can outlive it.
+   * Refetch once; if the second attempt fails too, say so instead of showing a
+   * broken image.
+   */
+  onPhotoLoadError(): void {
+    const receipt = this.photoFor();
+    if (!receipt) return;
+
+    if (this.photoRetried) {
+      this.photoUrl.set(null);
+      this.photoError.set('The receipt photo could not be displayed.');
+      return;
+    }
+
+    this.photoRetried = true;
+    this.openPhoto(receipt);
   }
 
   /* ---------------------------------------------------------------- filters */

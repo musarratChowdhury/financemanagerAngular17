@@ -2,9 +2,11 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { DatePickerModule } from '@syncfusion/ej2-angular-calendars';
 import { NumericTextBoxModule } from '@syncfusion/ej2-angular-inputs';
 import { ExpenseCategoryService } from '../../../services/expense-category.service';
+import { ReceiptImageService } from '../../../services/receipt-image.service';
 import { ReceiptModelService } from '../../../services/receipt-model.service';
 import { ReceiptService } from '../../../services/receipt.service';
 import {
@@ -70,6 +72,12 @@ export class ScanReceiptComponent implements OnInit {
   readonly ocrProgress = signal(0);
   readonly ocrMessage = signal('');
 
+  /**
+   * The picked file itself. The scan needs it, and the softcopy upload needs it
+   * again after the receipt has been saved.
+   */
+  readonly selectedFile = signal<File | null>(null);
+
   /** Model asked for, and the model that actually answered (differs after a fallback). */
   readonly requestedModel = signal<string | null>(null);
   readonly usedModel = signal('');
@@ -100,6 +108,21 @@ export class ScanReceiptComponent implements OnInit {
 
   readonly saving = signal(false);
   readonly saveError = signal('');
+
+  /**
+   * Softcopy state for the save step. `savedReceiptId` is what makes the retry
+   * safe: once the receipt exists, a failed photo upload retries against that id
+   * instead of posting the receipt again.
+   */
+  readonly photoStatus = signal<'idle' | 'uploading' | 'failed' | 'stored' | 'skipped'>('idle');
+  readonly photoError = signal('');
+  readonly savedReceiptId = signal<number | null>(null);
+
+  /**
+   * The softcopy is opt-in: the receipt is saved either way, but its photo is
+   * only uploaded when the user ticks the box on the save step.
+   */
+  savePhoto = false;
 
   /* ----------------------------------------------------------- computed */
 
@@ -146,6 +169,7 @@ export class ScanReceiptComponent implements OnInit {
     private expenseCategoryService: ExpenseCategoryService,
     private receiptScanner: ReceiptScannerService,
     private receiptService: ReceiptService,
+    private receiptImageService: ReceiptImageService,
     private receiptModels: ReceiptModelService,
     private router: Router
   ) {}
@@ -198,6 +222,10 @@ export class ScanReceiptComponent implements OnInit {
 
     this.fileError.set('');
     this.fileName.set(file.name);
+    this.selectedFile.set(file);
+    this.photoStatus.set('idle');
+    this.photoError.set('');
+    this.savedReceiptId.set(null);
 
     // Revoke the previous object URL so we do not leak blobs on re-upload.
     const previous = this.previewUrl();
@@ -388,6 +416,11 @@ export class ScanReceiptComponent implements OnInit {
 
     this.fileName.set('');
     this.previewUrl.set(null);
+    this.selectedFile.set(null);
+    this.photoStatus.set('idle');
+    this.photoError.set('');
+    this.savedReceiptId.set(null);
+    this.savePhoto = false;
     this.shop = '';
     this.invoiceNo = '';
     this.date = new Date();
@@ -409,6 +442,13 @@ export class ScanReceiptComponent implements OnInit {
 
   save(): void {
     if (!this.canSave || this.saving()) return;
+
+    // The receipt already exists and only its photo failed: retry the photo.
+    // Posting the receipt again would duplicate it.
+    if (this.savedReceiptId() !== null) {
+      void this.storePhoto();
+      return;
+    }
 
     this.saving.set(true);
     this.saveError.set('');
@@ -457,11 +497,9 @@ export class ScanReceiptComponent implements OnInit {
     };
 
     this.receiptService.create(receipt).subscribe({
-      next: () => {
-        this.saving.set(false);
-        const previous = this.previewUrl();
-        if (previous) URL.revokeObjectURL(previous);
-        this.router.navigate(['/expenses']);
+      next: (created) => {
+        this.savedReceiptId.set(created?.id ?? null);
+        void this.storePhoto();
       },
       error: (error) => {
         console.error('Receipt save failed:', error);
@@ -474,6 +512,132 @@ export class ScanReceiptComponent implements OnInit {
         );
       },
     });
+  }
+
+  /* --------------------------------------------------------- photo storage */
+
+  /** True for the formats the API stores. PDFs are read but never kept. */
+  private isStorablePhoto(file: File): boolean {
+    return (
+      /^image\/(jpeg|png|webp)$/.test(file.type) ||
+      /\.(jpe?g|png|webp)$/i.test(file.name)
+    );
+  }
+
+  /** Used by the template to warn that a PDF will not keep its softcopy. */
+  get willStorePhoto(): boolean {
+    const file = this.selectedFile();
+    return !!file && this.isStorablePhoto(file);
+  }
+
+  retryPhotoUpload(): void {
+    void this.storePhoto();
+  }
+
+  continueWithoutPhoto(): void {
+    this.photoStatus.set('skipped');
+    this.finishSave();
+  }
+
+  /**
+   * Uploads the softcopy for the receipt that was just saved. The receipt is
+   * already in the ledger at this point, so a failure keeps the user here with a
+   * retry instead of losing the save.
+   */
+  private async storePhoto(): Promise<void> {
+    const receiptId = this.savedReceiptId();
+    const file = this.selectedFile();
+
+    if (receiptId == null) {
+      this.finishSave();
+      return;
+    }
+
+    // The photo is opt-in: an unticked box saves the receipt without a softcopy.
+    if (!this.savePhoto) {
+      this.photoStatus.set('skipped');
+      this.finishSave();
+      return;
+    }
+
+    if (!file || !this.isStorablePhoto(file)) {
+      this.photoStatus.set('skipped');
+      this.finishSave();
+      return;
+    }
+
+    this.photoStatus.set('uploading');
+    this.photoError.set('');
+
+    try {
+      const upload = await this.prepareForUpload(file);
+      await firstValueFrom(this.receiptImageService.upload(receiptId, upload));
+      this.photoStatus.set('stored');
+      this.finishSave();
+    } catch (error) {
+      console.error('Receipt photo upload failed:', error);
+      this.photoStatus.set('failed');
+      this.saving.set(false);
+      this.photoError.set(
+        'The receipt was saved, but its photo could not be stored. Retry the photo, or continue to the ledger.'
+      );
+    }
+  }
+
+  private finishSave(): void {
+    this.saving.set(false);
+
+    const previous = this.previewUrl();
+    if (previous) URL.revokeObjectURL(previous);
+
+    this.router.navigate(['/expenses']);
+  }
+
+  /**
+   * Shrinks the upload copy: longest edge 1600px, WebP at 0.8. Phone photos are
+   * routinely several megabytes and the API caps a photo at 5 MB. The original
+   * file is what the scan used, so OCR quality is untouched. Anything that fails
+   * here falls back to the original bytes.
+   */
+  private async prepareForUpload(file: File): Promise<File> {
+    try {
+      if (typeof createImageBitmap !== 'function') return file;
+
+      const bitmap = await createImageBitmap(file);
+      const maxEdge = 1600;
+      const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+
+      // Already small enough: re-encoding would only lose detail.
+      if (scale === 1 && file.size <= 2 * 1024 * 1024) {
+        bitmap.close?.();
+        return file;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+
+      const context = canvas.getContext('2d');
+      if (!context) {
+        bitmap.close?.();
+        return file;
+      }
+
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close?.();
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/webp', 0.8)
+      );
+
+      if (!blob || blob.size >= file.size) return file;
+
+      return new File([blob], file.name.replace(/\.[^.]+$/, '') + '.webp', {
+        type: 'image/webp',
+      });
+    } catch {
+      return file;
+    }
   }
 
   /**

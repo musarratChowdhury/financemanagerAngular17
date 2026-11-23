@@ -145,3 +145,47 @@ label.syp-btn {
     width: 28px;
   }
 }
+
+/* Opt-in softcopy checkbox on the save step. */
+.syp-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--syp-border, #e4e4df);
+  border-radius: 12px;
+  background: var(--syp-surface-2, #f4f4f0);
+  cursor: pointer;
+}
+
+.syp-check input {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--syp-lime-2, #a6cf1d);
+}
+
+.syp-check input:disabled {
+  cursor: not-allowed;
+}
+
+.syp-check__text {
+  display: block;
+}
+
+.syp-check__label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--syp-ink, #111);
+}
+
+.syp-check__hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--syp-ink-2, #5f5f5a);
+}

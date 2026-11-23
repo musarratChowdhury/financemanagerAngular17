@@ -19,10 +19,11 @@ const httpOptions = {
 export class ReceiptService {
   constructor(private http: HttpClient) {}
 
-  // Create a new item
-  create(data: Receipt): Observable<any> {
+  // Create a new item. The API answers 201 with the stored receipt, including
+  // its generated id — the scan screen needs that id to attach the softcopy.
+  create(data: Receipt): Observable<Receipt> {
     return this.http
-      .post(API_URL, data, httpOptions)
+      .post<Receipt>(API_URL, data, httpOptions)
       .pipe(catchError(this.handleError));
   }
 
