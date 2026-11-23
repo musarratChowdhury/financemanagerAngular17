@@ -2,12 +2,12 @@
   display: block;
 }
 
-.dash-envelope-list {
+.dash-budget-list {
   display: grid;
   gap: 10px;
 }
 
-.dash-envelope-row {
+.dash-budget-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;

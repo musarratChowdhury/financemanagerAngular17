@@ -150,11 +150,11 @@
     <select
       id="receipt-model"
       class="syp-select"
-      [value]="selected()"
-      (change)="onSelect($any($event.target).value)"
+      [ngModel]="selected()"
+      (ngModelChange)="onSelect($event)"
     >
       @for (model of options(); track model.name) {
-      <option [value]="model.name">{{ labelFor(model) }}</option>
+      <option [ngValue]="model.name">{{ labelFor(model) }}</option>
       }
     </select>
     <div class="syp-label__hint">

@@ -15,11 +15,11 @@
       <select
         id="cf-month"
         class="syp-select"
-        [value]="selectedMonth()"
-        (change)="onMonth($any($event.target).value)"
+        [ngModel]="selectedMonth()"
+        (ngModelChange)="onMonth($event)"
       >
         @for (m of months; track m) {
-        <option [value]="m">{{ monthNames[m - 1] }}</option>
+        <option [ngValue]="m">{{ monthNames[m - 1] }}</option>
         }
       </select>
 
@@ -27,11 +27,11 @@
       <select
         id="cf-year"
         class="syp-select"
-        [value]="selectedYear()"
-        (change)="onYear($any($event.target).value)"
+        [ngModel]="selectedYear()"
+        (ngModelChange)="onYear($event)"
       >
         @for (y of years; track y) {
-        <option [value]="y">{{ y }}</option>
+        <option [ngValue]="y">{{ y }}</option>
         }
       </select>
     </div>

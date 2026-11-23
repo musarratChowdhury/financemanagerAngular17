@@ -1,0 +1,328 @@
+/* Budgets & goals — page-specific layout on top of the syp-* design system. */
+
+.bgt-period {
+  display: flex;
+  gap: 10px;
+}
+
+/* --------------------------------------------------------------- forms */
+
+.bgt-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr) auto;
+  gap: 14px;
+  align-items: end;
+}
+
+.bgt-form--goal {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+}
+
+.bgt-form__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+/* ------------------------------------------------------- total for month */
+
+.bgt-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.bgt-total__value {
+  font-family: var(--syp-font-head);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  margin-top: 6px;
+}
+
+.bgt-total__of {
+  font-family: var(--syp-font-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--syp-ink-2);
+}
+
+.bgt-metrics,
+.bgt-goal__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+  margin-top: 14px;
+}
+
+.bgt-metric__label {
+  font-size: 12px;
+  color: var(--syp-ink-2);
+}
+
+.bgt-metric__value {
+  font-size: 15px;
+  font-weight: 650;
+  margin-top: 2px;
+}
+
+/* Spent fill plus the forecast band out to the projection. */
+.bgt-bar {
+  position: relative;
+  height: 12px;
+  margin-top: 18px;
+  border-radius: 999px;
+  background: var(--syp-row);
+  overflow: hidden;
+}
+
+.bgt-bar__spent,
+.bgt-bar__forecast {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: width 180ms ease;
+}
+
+.bgt-bar__spent {
+  left: 0;
+  border-radius: 999px;
+  background: var(--syp-ink);
+}
+
+.bgt-bar__spent.is-over {
+  background: var(--syp-danger);
+}
+
+.bgt-bar__forecast {
+  background: var(--syp-lime);
+}
+
+.bgt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--syp-ink-2);
+}
+
+.bgt-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  background: var(--syp-ink);
+}
+
+.bgt-dot--forecast {
+  background: var(--syp-lime);
+}
+
+/* ---------------------------------------------------- sections and cards */
+
+.bgt-sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 26px 0 12px;
+}
+
+.bgt-grid,
+.bgt-goals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+  gap: 14px;
+}
+
+.bgt-goals {
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+}
+
+.bgt-cat,
+.bgt-goal {
+  background: var(--syp-surface);
+  border: 1px solid var(--syp-border);
+  border-radius: var(--syp-r-lg);
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.bgt-cat__top,
+.bgt-goal__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bgt-cat__top {
+  align-items: center;
+}
+
+.bgt-goal__top {
+  align-items: flex-start;
+}
+
+.bgt-cat__name {
+  font-weight: 650;
+}
+
+.bgt-cat__amount,
+.bgt-goal__amount {
+  margin-top: 12px;
+  font-family: var(--syp-font-head);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.bgt-cat__amount {
+  font-size: 22px;
+}
+
+.bgt-goal__amount {
+  font-size: 26px;
+}
+
+.bgt-cat__amount .syp-sub,
+.bgt-goal__amount .syp-sub {
+  font-family: var(--syp-font-body);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.bgt-goal__name {
+  font-family: var(--syp-font-head);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.bgt-cat__bar {
+  height: 8px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: var(--syp-row);
+  overflow: hidden;
+}
+
+.bgt-cat__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--syp-lime-2);
+}
+
+.bgt-cat__fill.is-near,
+.bgt-cat__fill.is-late {
+  background: #e6a817;
+}
+
+.bgt-cat__fill.is-over {
+  background: #d95c52;
+}
+
+.bgt-cat__fill.is-idle {
+  background: #b9b9b0;
+}
+
+.bgt-cat__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--syp-ink-2);
+}
+
+.bgt-cat__actions,
+.bgt-goal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.bgt-metric__value.is-good {
+  color: var(--syp-lime-ink);
+}
+
+.bgt-metric__value.is-bad {
+  color: var(--syp-danger);
+}
+
+.bgt-inline {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--syp-border-strong);
+}
+
+.bgt-inline__fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.bgt-inline__fields .syp-field {
+  flex: 1 1 132px;
+  min-width: 0;
+}
+
+.bgt-history {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px dashed var(--syp-border-strong);
+}
+
+.bgt-history__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--syp-divider);
+  font-size: 13.5px;
+}
+
+.bgt-history__row strong {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 900px) {
+  .bgt-form,
+  .bgt-form--goal {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .bgt-form__actions {
+    justify-content: stretch;
+  }
+
+  .bgt-form__actions .syp-btn {
+    flex: 1;
+  }
+
+  .bgt-total__value {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 520px) {
+  .bgt-period {
+    width: 100%;
+  }
+
+  .bgt-period .syp-select {
+    flex: 1;
+    min-width: 0;
+  }
+}

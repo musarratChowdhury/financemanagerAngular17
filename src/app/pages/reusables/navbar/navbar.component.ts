@@ -84,9 +84,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
     },
     {
       serial: 7,
-      text: 'Envelopes',
+      text: 'Budgets',
       submenu: false,
-      routerLink: '/envelopes',
+      routerLink: '/budgets',
     },
   ];
 

@@ -11,7 +11,7 @@ import { authGuard } from './auth.guard';
 import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
 import { CurrentNeedsComponent } from './pages/layout/current-needs/current-needs.component';
 import { CashFlowComponent } from './pages/layout/cash-flow/cash-flow.component';
-import { EnvelopesComponent } from './pages/layout/envelopes/envelopes.component';
+import { BudgetsComponent } from './pages/layout/budgets/budgets.component';
 import { SettingsComponent } from './pages/layout/settings/settings.component';
 
 export const routes: Routes = [
@@ -71,9 +71,9 @@ export const routes: Routes = [
         component: CurrentNeedsComponent,
       },
       {
-        path: 'envelopes',
-        title: 'Envelope budget · Save Your Penny',
-        component: EnvelopesComponent,
+        path: 'budgets',
+        title: 'Budgets · Save Your Penny',
+        component: BudgetsComponent,
       },
       {
         path: 'settings',
@@ -90,6 +90,9 @@ export const routes: Routes = [
       { path: 'expense-table', redirectTo: 'expenses', pathMatch: 'full' },
       { path: 'expense-category', redirectTo: 'categories', pathMatch: 'full' },
       { path: 'receipt', redirectTo: 'scan-receipt', pathMatch: 'full' },
+      // Envelope limits lived in IndexedDB; budgets are server-side now, so the old
+      // link lands on the screen that replaced them.
+      { path: 'envelopes', redirectTo: 'budgets', pathMatch: 'full' },
     ],
   },
 

@@ -16,11 +16,11 @@
     <select
       id="dash-month"
       class="syp-select"
-      [value]="selectedMonth()"
-      (change)="onMonthChange($any($event.target).value)"
+      [ngModel]="selectedMonth()"
+      (ngModelChange)="onMonthChange($event)"
     >
       @for (m of months; track m; let i = $index) {
-      <option [value]="i + 1">{{ m }}</option>
+      <option [ngValue]="i + 1">{{ m }}</option>
       }
     </select>
 
@@ -28,11 +28,11 @@
     <select
       id="dash-year"
       class="syp-select"
-      [value]="selectedYear()"
-      (change)="onYearChange($any($event.target).value)"
+      [ngModel]="selectedYear()"
+      (ngModelChange)="onYearChange($event)"
     >
       @for (y of years; track y) {
-      <option [value]="y">{{ y }}</option>
+      <option [ngValue]="y">{{ y }}</option>
       }
     </select>
 
@@ -168,20 +168,20 @@
   } }
 </div>
 
-@if (envelopeBudgets().length) {
+@if (budgetChecks().length) {
 <div class="syp-card syp-card--pad" style="margin-bottom: 16px">
   <div class="syp-card-head">
     <div>
-      <h2 class="syp-h2">Envelope check</h2>
+      <h2 class="syp-h2">Budget check</h2>
       <div class="syp-sub" style="font-size: 13px">Your highest-utilisation limits this month.</div>
     </div>
-    <a class="syp-link" routerLink="/envelopes">Manage limits</a>
+    <a class="syp-link" routerLink="/budgets">Manage budgets</a>
   </div>
-  <div class="dash-envelope-list">
-    @for (budget of envelopeBudgets(); track budget.categoryId) {
-    <div class="dash-envelope-row">
+  <div class="dash-budget-list">
+    @for (budget of budgetChecks(); track budget.categoryId) {
+    <div class="dash-budget-row">
       <span>{{ budget.categoryName }}</span>
-      <strong>{{ money(budget.spentAmount) }} / {{ money(budget.limitAmount) }}</strong>
+      <strong>{{ money(budget.spent) }} / {{ money(budget.limit) }}</strong>
     </div>
     }
   </div>

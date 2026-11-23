@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
   AccumulationChartModule,
@@ -13,8 +14,8 @@ import {
   TooltipService,
 } from '@syncfusion/ej2-angular-charts';
 import { BudgetService } from '../../../services/budget.service';
-import { EnvelopeBudgetService } from '../../../services/envelope-budget.service';
-import { EnvelopeBudget } from '../../../../models/EnvelopeBudget';
+import { BudgetLimitService } from '../../../services/budget-limit.service';
+import { BudgetCategory } from '../../../../models/BudgetLimit';
 import { MonthSnapshot, MonthlyExpense, SavingsInsight } from '../../../../models/Budget';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import {
@@ -36,6 +37,7 @@ interface MonthBar {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     ChartModule,
     AccumulationChartModule,
@@ -76,7 +78,7 @@ export class DashboardComponent implements OnInit {
   readonly insights = signal<SavingsInsight[]>([]);
   readonly loading = signal(true);
   readonly failed = signal(false);
-  readonly envelopeBudgets = signal<EnvelopeBudget[]>([]);
+  readonly budgetChecks = signal<BudgetCategory[]>([]);
 
   readonly greeting = greeting();
   readonly money = money;
@@ -150,7 +152,7 @@ export class DashboardComponent implements OnInit {
 
   constructor(
     private budgetService: BudgetService,
-    private envelopeService: EnvelopeBudgetService
+    private budgetLimitService: BudgetLimitService
   ) {
     const currentYear = new Date().getFullYear();
     for (let y = currentYear; y >= currentYear - 5; y--) {
@@ -165,7 +167,7 @@ export class DashboardComponent implements OnInit {
   load(): void {
     this.loading.set(true);
     this.failed.set(false);
-    this.loadEnvelopes();
+    this.loadBudgets();
     this.budgetService
       .loadMonth(this.selectedMonth(), this.selectedYear())
       .subscribe({
@@ -181,26 +183,30 @@ export class DashboardComponent implements OnInit {
       });
   }
 
-  private loadEnvelopes(): void {
-    this.envelopeService.load(this.selectedMonth(), this.selectedYear()).subscribe({
-      next: (budgets) =>
-        this.envelopeBudgets.set(
-          budgets.filter((budget) => budget.limitAmount > 0).slice(0, 3)
+  /** Highest-utilisation ceilings for the month, read from the same endpoint the Budgets screen uses. */
+  private loadBudgets(): void {
+    this.budgetLimitService.getSummary(this.selectedMonth(), this.selectedYear()).subscribe({
+      next: (summary) =>
+        this.budgetChecks.set(
+          summary.categories
+            .filter((category) => category.limit > 0)
+            .sort((a, b) => b.usedPercent - a.usedPercent)
+            .slice(0, 3)
         ),
-      error: () => this.envelopeBudgets.set([]),
+      error: () => this.budgetChecks.set([]),
     });
   }
 
-  onMonthChange(value: string): void {
-    const month = parseInt(value, 10);
+  onMonthChange(value: number | string): void {
+    const month = Number(value);
     if (!isNaN(month)) {
       this.selectedMonth.set(month);
       this.load();
     }
   }
 
-  onYearChange(value: string): void {
-    const year = parseInt(value, 10);
+  onYearChange(value: number | string): void {
+    const year = Number(value);
     if (!isNaN(year)) {
       this.selectedYear.set(year);
       this.load();

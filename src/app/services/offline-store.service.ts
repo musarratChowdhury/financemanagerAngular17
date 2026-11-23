@@ -19,21 +19,15 @@ export interface CachedResponse {
   userId: string;
 }
 
-export interface EnvelopeBudgetRecord {
-  id: string;
-  userId: string;
-  categoryId: number;
-  month: number;
-  year: number;
-  limitAmount: number;
-  updatedAt: number;
-}
-
 /**
  * IndexedDB wrapper for offline support.
- * Two stores, both scoped by user id:
+ * Two active stores, both scoped by user id:
  * - `queue`: pending writes (mutations) waiting for connectivity
  * - `cache`: last-known server reads for offline display
+ *
+ * The legacy `envelopes` object store is still created and cleared (so old data can be
+ * wiped without an IndexedDB version bump), but category limits are server-side now and
+ * nothing reads or writes it any more.
  */
 @Injectable({ providedIn: 'root' })
 export class OfflineStoreService {
@@ -291,51 +285,7 @@ export class OfflineStoreService {
     await Promise.all([this.clearQueue(), this.clearCache(), this.clearEnvelopes()]);
   }
 
-  async getEnvelopes(month: number, year: number): Promise<EnvelopeBudgetRecord[]> {
-    await this.init();
-    const userId = this.getCurrentUserId();
-    return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction(this.envelopeStore, 'readonly');
-      const request = tx.objectStore(this.envelopeStore).index('userId').getAll(userId);
-      request.onsuccess = () =>
-        resolve((request.result as EnvelopeBudgetRecord[]).filter((item) =>
-          item.month === month && item.year === year
-        ));
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  async saveEnvelope(categoryId: number, month: number, year: number, limitAmount: number): Promise<void> {
-    await this.init();
-    const userId = this.getCurrentUserId();
-    const entry: EnvelopeBudgetRecord = {
-      id: `${userId}:${year}-${month}:${categoryId}`,
-      userId,
-      categoryId,
-      month,
-      year,
-      limitAmount,
-      updatedAt: Date.now(),
-    };
-    return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction(this.envelopeStore, 'readwrite');
-      tx.objectStore(this.envelopeStore).put(entry);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
-  async deleteEnvelope(categoryId: number, month: number, year: number): Promise<void> {
-    await this.init();
-    const userId = this.getCurrentUserId();
-    return new Promise((resolve, reject) => {
-      const tx = this.db!.transaction(this.envelopeStore, 'readwrite');
-      tx.objectStore(this.envelopeStore).delete(`${userId}:${year}-${month}:${categoryId}`);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-  }
-
+  /** Wipes the dormant legacy envelope store, so a pre-budgets install leaves nothing behind. */
   private async clearEnvelopes(): Promise<void> {
     await this.init();
     const userId = this.getCurrentUserId();

@@ -132,12 +132,12 @@ export class CurrentNeedsComponent implements OnInit {
       });
   }
 
-  onMonth(value: string): void {
+  onMonth(value: number | string): void {
     this.selectedMonth.set(Number(value));
     this.loadMonth();
   }
 
-  onYear(value: string): void {
+  onYear(value: number | string): void {
     this.selectedYear.set(Number(value));
     this.loadMonth();
   }

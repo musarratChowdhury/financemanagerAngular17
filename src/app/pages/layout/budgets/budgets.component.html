@@ -1,0 +1,493 @@
+<app-mobilebar title="Budgets & goals"></app-mobilebar>
+
+<div class="syp-page-head">
+  <div>
+    <div class="syp-eyebrow">Plan the month</div>
+    <h1 class="syp-h1">Budgets &amp; goals</h1>
+    <p class="syp-sub" style="margin-top: 6px">
+      {{ monthLabel() }}<span aria-hidden="true"> · </span>{{ daysLeftLabel() }}
+    </p>
+  </div>
+
+  <div class="syp-head-actions">
+    <div class="bgt-period">
+      <label class="syp-sr-only" for="bgt-month">Month</label>
+      <select
+        id="bgt-month"
+        class="syp-select"
+        [ngModel]="selectedMonth()"
+        (ngModelChange)="onMonth($event)"
+      >
+        @for (month of months; track month) {
+        <option [ngValue]="month">{{ monthNames[month - 1] }}</option>
+        }
+      </select>
+
+      <label class="syp-sr-only" for="bgt-year">Year</label>
+      <select
+        id="bgt-year"
+        class="syp-select"
+        [ngModel]="selectedYear()"
+        (ngModelChange)="onYear($event)"
+      >
+        @for (year of years; track year) {
+        <option [ngValue]="year">{{ year }}</option>
+        }
+      </select>
+    </div>
+
+    <button class="syp-btn syp-btn--primary" type="button" (click)="openBudgetForm()">
+      + New budget
+    </button>
+  </div>
+</div>
+
+@if (failed()) {
+<div class="syp-card syp-card--pad">
+  <div class="syp-empty">
+    <div class="syp-empty__title">Could not load your budgets</div>
+    <p class="syp-sub">The budget service did not respond.</p>
+    <button class="syp-btn syp-btn--primary" type="button" (click)="loadAll()">Try again</button>
+  </div>
+</div>
+} @else {
+
+@if (notice()) {
+<div class="syp-notice syp-notice--good" role="status" style="margin-bottom: 16px">{{ notice() }}</div>
+}
+
+<!-- ============================== new budget ============================== -->
+@if (showBudgetForm()) {
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <div class="syp-h2">New budget</div>
+  </div>
+
+  @if (budgetError()) {
+  <div class="syp-notice" role="alert" style="margin-bottom: 14px">{{ budgetError() }}</div>
+  }
+
+  <div class="bgt-form">
+    <div class="syp-field syp-field--flush">
+      <label class="syp-label" for="bgt-category">Category</label>
+      <select id="bgt-category" class="syp-select" [(ngModel)]="budgetDraft.categoryId">
+        <option [ngValue]="null">Choose…</option>
+        @for (category of categories(); track category.id) {
+        <option [ngValue]="category.id">{{ categoryOptionLabel(category) }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="syp-field syp-field--flush">
+      <label class="syp-label" for="bgt-limit">Monthly limit ({{ currencySymbol }})</label>
+      <input
+        id="bgt-limit"
+        class="syp-input"
+        type="number"
+        min="1"
+        step="0.01"
+        inputmode="decimal"
+        placeholder="e.g. 1000"
+        [(ngModel)]="budgetDraft.limit"
+      />
+    </div>
+
+    <div class="bgt-form__actions">
+      <button class="syp-btn syp-btn--quiet" type="button" (click)="cancelBudgetForm()">
+        Cancel
+      </button>
+      <button
+        class="syp-btn syp-btn--primary"
+        type="button"
+        (click)="saveBudget()"
+        [disabled]="savingBudget()"
+      >
+        {{ savingBudget() ? 'Saving…' : 'Save budget' }}
+      </button>
+    </div>
+  </div>
+
+  <p class="syp-sub" style="margin-top: 12px; font-size: 13px">
+    The limit applies from {{ monthLabel() }} onward until you change it. Spending resets every
+    month, so a new month starts at zero against the same ceiling.
+  </p>
+</div>
+}
+
+<!-- =========================== total for the month ========================= -->
+@if (summary(); as s) {
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="bgt-total">
+    <div>
+      <div class="syp-h2">Total monthly budget</div>
+      <div class="bgt-total__value">
+        {{ money(s.totalSpent) }}<span class="bgt-total__of"> of {{ money(s.totalLimit) }}</span>
+      </div>
+    </div>
+
+    <div class="bgt-metrics">
+      <div class="bgt-metric">
+        <div class="bgt-metric__label">Used</div>
+        <div class="bgt-metric__value">{{ percentOf(s.usedPercent) }}</div>
+      </div>
+      <div class="bgt-metric">
+        <div class="bgt-metric__label">Projected</div>
+        <div class="bgt-metric__value">{{ money(s.projected) }}</div>
+      </div>
+      <div class="bgt-metric">
+        <div class="bgt-metric__label">Safe to spend / day</div>
+        <div class="bgt-metric__value">{{ money(s.safeToSpendPerDay) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="bgt-bar"
+    role="img"
+    [attr.aria-label]="
+      'Spent ' + percentOf(s.usedPercent) + ' of the monthly budget, projected ' + money(s.projected)
+    "
+  >
+    <div
+      class="bgt-bar__spent"
+      [class.is-over]="s.usedPercent > 100"
+      [style.width.%]="spentBar()"
+    ></div>
+    <div class="bgt-bar__forecast" [style.left.%]="spentBar()" [style.width.%]="forecastBar()"></div>
+  </div>
+
+  <div class="bgt-legend">
+    <span><i class="bgt-dot"></i>Spent so far</span>
+    <span><i class="bgt-dot bgt-dot--forecast"></i>Forecast to month-end</span>
+  </div>
+
+  @if (!hasBudgets()) {
+  <p class="syp-sub" style="margin-top: 12px; font-size: 13px">
+    No category has a limit yet — add one to see how the month is tracking.
+  </p>
+  } @else if (s.daysRemaining === 0 && s.daysElapsed > 0) {
+  <p class="syp-sub" style="margin-top: 12px; font-size: 13px">
+    This month is closed, so there are no days left to spread the remaining budget over.
+  </p>
+  }
+</div>
+}
+
+<!-- ============================== by category ============================= -->
+<div class="bgt-sec-head">
+  <div>
+    <div class="syp-h2">By category</div>
+    <p class="syp-sub" style="font-size: 13px">
+      Green under 80%, amber from 80%, red when over. Spend is the selected month's.
+    </p>
+  </div>
+</div>
+
+@if (loading() && !summary()) {
+<div class="syp-stack">
+  <div class="syp-skeleton" style="height: 130px"></div>
+  <div class="syp-skeleton" style="height: 130px"></div>
+</div>
+} @else if (summary(); as s) {
+  @if (!s.categories.length) {
+  <div class="syp-card syp-card--pad">
+    <div class="syp-empty">
+      <div class="syp-empty__title">Nothing recorded for {{ monthLabel() }}</div>
+      <p class="syp-sub">Add an expense, or set a category limit to start tracking it.</p>
+      <button class="syp-btn syp-btn--primary" type="button" (click)="openBudgetForm()">
+        + New budget
+      </button>
+    </div>
+  </div>
+  } @else {
+  <div class="bgt-grid">
+    @for (category of s.categories; track category.categoryId) {
+    <div class="bgt-cat">
+      <div class="bgt-cat__top">
+        <div class="bgt-cat__name">{{ category.categoryName }}</div>
+        <span class="syp-pill" [ngClass]="pillClass(category)">{{ pillLabel(category) }}</span>
+      </div>
+
+      <div class="bgt-cat__amount">
+        {{ money(category.spent) }}
+        @if (category.limit > 0) {
+        <span class="syp-sub"> of {{ money(category.limit) }}</span>
+        }
+      </div>
+
+      @if (category.limit > 0) {
+      <div
+        class="bgt-cat__bar"
+        role="progressbar"
+        [attr.aria-valuenow]="percentOf(category.usedPercent)"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <div
+          class="bgt-cat__fill"
+          [ngClass]="'is-' + category.status"
+          [style.width.%]="barWidth(category)"
+        ></div>
+      </div>
+
+      <div class="bgt-cat__foot">
+        <span>{{ percentOf(category.usedPercent) }} used</span>
+        @if (category.effectiveFrom) {
+        <span class="syp-muted">Since {{ monthYear(category.effectiveFrom) }}</span>
+        }
+      </div>
+      } @else {
+      <p class="syp-sub" style="font-size: 13px; margin-top: 8px">
+        No limit set for this category.
+      </p>
+      }
+
+      <div class="bgt-cat__actions">
+        <button
+          class="syp-btn syp-btn--quiet syp-btn--sm"
+          type="button"
+          (click)="openBudgetForm(category)"
+        >
+          {{ category.limit > 0 ? 'Edit limit' : 'Set limit' }}
+        </button>
+        @if (category.limit > 0) {
+        <button
+          class="syp-btn syp-btn--quiet syp-btn--sm"
+          type="button"
+          (click)="removeBudget(category)"
+        >
+          Remove
+        </button>
+        }
+      </div>
+    </div>
+    }
+  </div>
+  }
+}
+
+<!-- ================================= goals ================================= -->
+<div class="bgt-sec-head">
+  <div>
+    <div class="syp-h2">Goals</div>
+    <p class="syp-sub" style="font-size: 13px">
+      Every amount you set aside is kept as a contribution, so the pace figure is real.
+    </p>
+  </div>
+  <button class="syp-btn syp-btn--quiet" type="button" (click)="openGoalForm()">+ New goal</button>
+</div>
+
+@if (goalError()) {
+<div class="syp-notice" role="alert" style="margin-bottom: 14px">{{ goalError() }}</div>
+}
+
+@if (showGoalForm()) {
+<div class="syp-card syp-card--pad" style="margin-bottom: 16px">
+  <div class="syp-card-head">
+    <div class="syp-h2">New goal</div>
+  </div>
+
+  <div class="bgt-form bgt-form--goal">
+    <div class="syp-field syp-field--flush">
+      <label class="syp-label" for="goal-name">What are you saving for?</label>
+      <input
+        id="goal-name"
+        class="syp-input"
+        type="text"
+        placeholder="e.g. new pc"
+        [(ngModel)]="goalDraft.name"
+      />
+    </div>
+
+    <div class="syp-field syp-field--flush">
+      <label class="syp-label" for="goal-target">Target ({{ currencySymbol }})</label>
+      <input
+        id="goal-target"
+        class="syp-input"
+        type="number"
+        min="1"
+        step="0.01"
+        inputmode="decimal"
+        [(ngModel)]="goalDraft.target"
+      />
+    </div>
+
+    <div class="syp-field syp-field--flush">
+      <label class="syp-label" for="goal-saved">Saved so far ({{ currencySymbol }})</label>
+      <input
+        id="goal-saved"
+        class="syp-input"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        [(ngModel)]="goalDraft.saved"
+      />
+    </div>
+
+    <div class="syp-field syp-field--flush">
+      <label class="syp-label" for="goal-date">Reach it by</label>
+      <input id="goal-date" class="syp-input" type="date" [(ngModel)]="goalDraft.reachBy" />
+    </div>
+
+    <div class="bgt-form__actions">
+      <button class="syp-btn syp-btn--quiet" type="button" (click)="cancelGoalForm()">Cancel</button>
+      <button
+        class="syp-btn syp-btn--primary"
+        type="button"
+        (click)="saveGoal()"
+        [disabled]="savingGoal()"
+      >
+        {{ savingGoal() ? 'Saving…' : 'Save goal' }}
+      </button>
+    </div>
+  </div>
+
+  <p class="syp-sub" style="margin-top: 12px; font-size: 13px">
+    Anything you already saved becomes the first contribution, so the average starts from real
+    history.
+  </p>
+</div>
+}
+
+@if (loading() && !goals().length) {
+<div class="syp-stack">
+  <div class="syp-skeleton" style="height: 180px"></div>
+</div>
+} @else if (!goals().length) {
+<div class="syp-card syp-card--pad">
+  <div class="syp-empty">
+    <div class="syp-empty__title">No goals yet</div>
+    <p class="syp-sub">Set a target and start setting money aside; the pace updates as you go.</p>
+    <button class="syp-btn syp-btn--primary" type="button" (click)="openGoalForm()">
+      + New goal
+    </button>
+  </div>
+</div>
+} @else {
+<div class="bgt-goals">
+  @for (goal of goals(); track goal.id) {
+  <div class="bgt-goal">
+    <div class="bgt-goal__top">
+      <div>
+        <div class="syp-eyebrow">Goal</div>
+        <div class="bgt-goal__name">{{ goal.name }}</div>
+      </div>
+      <span class="syp-pill">{{ targetLabel(goal) }}</span>
+    </div>
+
+    <div class="bgt-goal__amount">
+      {{ money(goal.savedAmount) }}<span class="syp-sub"> of {{ money(goal.targetAmount) }}</span>
+    </div>
+
+    <div
+      class="bgt-cat__bar"
+      role="progressbar"
+      [attr.aria-valuenow]="percentOf(goalBar(goal))"
+      aria-valuemin="0"
+      aria-valuemax="100"
+    >
+      <div class="bgt-cat__fill" [ngClass]="goalFillClass(goal)" [style.width.%]="goalBar(goal)"></div>
+    </div>
+
+    <div class="bgt-goal__metrics">
+      <div class="bgt-metric">
+        <div class="bgt-metric__label">Needed / month</div>
+        <div class="bgt-metric__value">
+          {{ goal.neededPerMonth === null ? '—' : money(goal.neededPerMonth) }}
+        </div>
+      </div>
+      <div class="bgt-metric">
+        <div class="bgt-metric__label">Avg saved / month</div>
+        <div class="bgt-metric__value">{{ money(goal.avgSavedPerMonth) }}</div>
+      </div>
+      <div class="bgt-metric">
+        <div class="bgt-metric__label">At current pace</div>
+        <div class="bgt-metric__value" [ngClass]="paceClass(goal)">{{ paceLabel(goal) }}</div>
+      </div>
+    </div>
+
+    @if (addingTo() === goal.id) {
+    <div class="bgt-inline">
+      @if (contributionError()) {
+      <div class="syp-notice" role="alert" style="margin-bottom: 12px">{{ contributionError() }}</div>
+      }
+      <div class="bgt-inline__fields">
+        <div class="syp-field syp-field--flush">
+          <label class="syp-label" [for]="'goal-amount-' + goal.id">
+            Amount ({{ currencySymbol }})
+          </label>
+          <input
+            [id]="'goal-amount-' + goal.id"
+            class="syp-input"
+            type="number"
+            min="1"
+            step="0.01"
+            inputmode="decimal"
+            [(ngModel)]="contributionDraft.amount"
+          />
+        </div>
+
+        <div class="syp-field syp-field--flush">
+          <label class="syp-label" [for]="'goal-date-' + goal.id">Date</label>
+          <input
+            [id]="'goal-date-' + goal.id"
+            class="syp-input"
+            type="date"
+            [(ngModel)]="contributionDraft.date"
+          />
+        </div>
+
+        <div class="bgt-form__actions">
+          <button class="syp-btn syp-btn--quiet syp-btn--sm" type="button" (click)="cancelContribution()">
+            Cancel
+          </button>
+          <button
+            class="syp-btn syp-btn--primary syp-btn--sm"
+            type="button"
+            (click)="saveContribution(goal)"
+            [disabled]="savingContribution()"
+          >
+            {{ savingContribution() ? 'Saving…' : 'Add' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <div class="bgt-goal__actions">
+      <button class="syp-btn syp-btn--primary syp-btn--sm" type="button" (click)="openContribution(goal)">
+        + Add to saved
+      </button>
+      <button class="syp-btn syp-btn--quiet syp-btn--sm" type="button" (click)="toggleHistory(goal.id)">
+        {{ isOpen(goal.id) ? 'Hide history' : 'History (' + goal.contributions.length + ')' }}
+      </button>
+      <button class="syp-btn syp-btn--danger syp-btn--sm" type="button" (click)="deleteGoal(goal)">
+        Delete
+      </button>
+    </div>
+
+    @if (isOpen(goal.id)) {
+      @if (!goal.contributions.length) {
+      <p class="syp-sub" style="font-size: 13px; margin-top: 12px">
+        Nothing set aside yet. Add the first amount above.
+      </p>
+      } @else {
+      <ul class="bgt-history">
+        @for (contribution of goal.contributions; track contribution.id) {
+        <li class="bgt-history__row">
+          <span class="syp-muted">{{ longDate(contribution.contributionDate) }}</span>
+          <strong>{{ money(contribution.amount) }}</strong>
+          <button class="syp-link-quiet" type="button" (click)="removeContribution(goal, contribution)">
+            Remove
+          </button>
+        </li>
+        }
+      </ul>
+      }
+    }
+  </div>
+  }
+</div>
+}
+}

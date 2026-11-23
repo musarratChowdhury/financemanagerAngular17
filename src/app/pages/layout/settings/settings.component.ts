@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MobileBarComponent } from '../../reusables/mobilebar/mobilebar.component';
 import { ReceiptModelService } from '../../../services/receipt-model.service';
 import {
@@ -33,7 +34,7 @@ interface TestOutcome {
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, MobileBarComponent],
+  imports: [CommonModule, FormsModule, MobileBarComponent],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.css',
 })
