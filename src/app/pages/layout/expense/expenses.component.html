@@ -221,6 +221,25 @@
         }
       </select>
 
+      <label class="syp-sr-only" for="ex-date-filter">Show expenses from one day</label>
+      <input
+        id="ex-date-filter"
+        type="date"
+        class="syp-input syp-input--date"
+        [value]="filterDate()"
+        (change)="onFilterDate($any($event.target).value)"
+      />
+
+      @if (filterDate()) {
+        <button
+          type="button"
+          class="syp-btn syp-btn--quiet syp-btn--sm"
+          (click)="clearDateFilter()"
+        >
+          Clear date
+        </button>
+      }
+
       <label class="syp-sr-only" for="ex-sort">Sort by</label>
       <select
         id="ex-sort"
@@ -259,7 +278,9 @@
     <div class="syp-empty">
       <div class="syp-empty__title">No expenses found</div>
       <p class="syp-sub">
-        @if (search() || filterCategory() !== 'all') {
+        @if (filterDate()) {
+          Nothing was recorded on {{ filterDateLabel() }}.
+        } @else if (search() || filterCategory() !== 'all') {
           Try a different search or category.
         } @else {
           Add your first expense using the form.
@@ -433,7 +454,13 @@
     }
 
     <div class="syp-grand-total">
-      <span class="syp-grand-total__label">Grand total</span>
+      <span class="syp-grand-total__label">
+        @if (filterDate()) {
+          Total on {{ filterDateLabel() }}
+        } @else {
+          Grand total
+        }
+      </span>
       <span class="syp-grand-total__value">{{ money(grandTotal()) }}</span>
     </div>
   </div>

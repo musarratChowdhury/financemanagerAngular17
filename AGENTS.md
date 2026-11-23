@@ -10,7 +10,7 @@ own pipeline has run.
 ## Repo shape
 
 - Angular 20 standalone components, Tailwind 3 + daisyUI 4, Syncfusion 25.2 (charts, grids, calendars, inputs, notifications, popups).
-- `src/app/pages/layout/**` — the real screens (dashboard, expenses, categories, scan-receipt, cash-flow, current-needs, envelopes, settings).
+- `src/app/pages/layout/**` — the real screens (dashboard, expenses, categories, scan-receipt, cash-flow, envelopes, settings).
 - `src/app/pages/{login,register}/` — auth screens.
 - `src/app/services/**` — one service per API area. `src/app/_helpers/` — money/date helpers, HTTP interceptors.
 - `src/syp-theme.css` — the app's own design system (`syp-*` classes, CSS custom properties, light theme). `src/styles.css` — Syncfusion CSS imports + Tailwind entry points. Both are registered in `angular.json` `build.options.styles`.
@@ -27,7 +27,7 @@ own pipeline has run.
 
 ## Two design systems, pick by screen
 
-- The redesigned screens (dashboard, expenses, categories, scan-receipt, cash-flow, current-needs, envelopes) use the `syp-*` classes from `src/syp-theme.css` — light, custom, with a hand-rolled select (`.syp-select`) and input (`.syp-input`).
+- The redesigned screens (dashboard, expenses, categories, scan-receipt, cash-flow, envelopes) use the `syp-*` classes from `src/syp-theme.css` — light, custom, with a hand-rolled select (`.syp-select`) and input (`.syp-input`).
 - `expense.component.*` and `receipt.component.*` are the **old** daisyUI-styled screens (`btn btn-sm btn-info`). They are **not routed** — `/expense` and `/receipt` redirect to `/expenses` and `/scan-receipt` — so they are effectively dead code. Change them only to keep them compiling and consistent.
 
 ## Gotchas that will burn you
@@ -58,6 +58,11 @@ So the API payload must carry an explicit instant: use **`isoUtcDate()`** from
 `src/app/_helpers/money.ts` (`yyyy-MM-ddT00:00:00.000Z`), not `isoDate()`
 (`yyyy-MM-dd`, which is only for `<input type="date">`). The API also normalises
 an Unspecified date server-side, but the client should still send a UTC value.
+
+The ledger's day filter (`#ex-date-filter` on `/expenses`) compares the row's
+**local calendar day** — `isoDate(row.date)`, the same day the Date column prints —
+not the UTC day. Rows are stored at UTC midnight, so a UTC compare would disagree
+with the visible date either side of Greenwich; keep it local rather than "fixing" it.
 
 ## Deploy
 

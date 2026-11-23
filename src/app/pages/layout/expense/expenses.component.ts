@@ -145,6 +145,25 @@ export class ExpensesComponent implements OnInit {
   readonly loading = signal(true);
   readonly search = signal('');
   readonly filterCategory = signal<number | 'all'>('all');
+  /** `yyyy-MM-dd` from the native date input; empty means every day. */
+  readonly filterDate = signal('');
+
+  /**
+   * The picked day in the same short form the rows use (`23 Nov,26`). Read from
+   * the `yyyy-MM-dd` parts rather than `new Date(value)`: a bare date string is
+   * parsed as UTC, which would show the previous day west of Greenwich.
+   */
+  readonly filterDateLabel = computed(() => {
+    const value = this.filterDate();
+    if (!value) return '';
+
+    const [year, month, day] = value.split('-').map(Number);
+    if (!year || !month || !day) return '';
+    const monthName = new Date(year, month - 1, day).toLocaleString('en-US', {
+      month: 'short',
+    });
+    return `${day} ${monthName},${`${year}`.slice(-2)}`;
+  });
 
   /** Shared by both views — the ledger opens on newest-first. */
   readonly sortKey = signal<SortKey>('date-desc');
@@ -190,9 +209,13 @@ export class ExpensesComponent implements OnInit {
   readonly filtered = computed(() => {
     const term = this.search().trim().toLowerCase();
     const cat = this.filterCategory();
+    const day = this.filterDate();
 
     return this.rows().filter((r) => {
       if (cat !== 'all' && r.categoryId !== cat) return false;
+      // Compare the row's local calendar day, which is exactly what the Date
+      // column renders — a UTC-day compare would disagree with the visible date.
+      if (day && isoDate(r.date) !== day) return false;
       if (!term) return true;
       return (
         r.title.toLowerCase().includes(term) ||
@@ -538,6 +561,15 @@ export class ExpensesComponent implements OnInit {
   onFilterCategory(value: string): void {
     this.filterCategory.set(value === 'all' ? 'all' : Number(value));
     this.page.set(1);
+  }
+
+  onFilterDate(value: string): void {
+    this.filterDate.set(value ?? '');
+    this.page.set(1);
+  }
+
+  clearDateFilter(): void {
+    this.onFilterDate('');
   }
 
   onSortChange(value: string): void {

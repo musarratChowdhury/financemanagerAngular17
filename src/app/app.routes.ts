@@ -9,7 +9,6 @@ import { ExpensesComponent } from './pages/layout/expense/expenses.component';
 import { ScanReceiptComponent } from './pages/layout/receipt/scan-receipt.component';
 import { authGuard } from './auth.guard';
 import { NavbarComponent } from './pages/reusables/navbar/navbar.component';
-import { CurrentNeedsComponent } from './pages/layout/current-needs/current-needs.component';
 import { CashFlowComponent } from './pages/layout/cash-flow/cash-flow.component';
 import { BudgetsComponent } from './pages/layout/budgets/budgets.component';
 import { SettingsComponent } from './pages/layout/settings/settings.component';
@@ -66,11 +65,6 @@ export const routes: Routes = [
         component: CashFlowComponent,
       },
       {
-        path: 'current-needs',
-        title: 'Current needs · Save Your Penny',
-        component: CurrentNeedsComponent,
-      },
-      {
         path: 'budgets',
         title: 'Budgets · Save Your Penny',
         component: BudgetsComponent,
@@ -93,6 +87,8 @@ export const routes: Routes = [
       // Envelope limits lived in IndexedDB; budgets are server-side now, so the old
       // link lands on the screen that replaced them.
       { path: 'envelopes', redirectTo: 'budgets', pathMatch: 'full' },
+      // The current-needs screen was folded back into the dashboard.
+      { path: 'current-needs', redirectTo: 'dashboard', pathMatch: 'full' },
     ],
   },
 

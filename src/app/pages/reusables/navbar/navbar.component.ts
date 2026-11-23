@@ -72,18 +72,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     },
     {
       serial: 5,
-      text: 'Current Needs',
-      submenu: false,
-      routerLink: '/current-needs',
-    },
-    {
-      serial: 6,
       text: 'Cash Flow',
       submenu: false,
       routerLink: '/cash-flow',
     },
     {
-      serial: 7,
+      serial: 6,
       text: 'Budgets',
       submenu: false,
       routerLink: '/budgets',

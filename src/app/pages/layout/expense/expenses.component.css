@@ -25,6 +25,11 @@
   font-size: 15px;
 }
 
+/* The day filter is a compact picker, not a second stretching search box. */
+.syp-ledger-tools > .syp-input--date {
+  flex: 0 1 170px;
+}
+
 /* Rows sit inside a card that is already padded on desktop. */
 .syp-ledger-pad {
   padding: 0 16px;
@@ -38,6 +43,10 @@
 
   .syp-ledger-tools > .syp-input {
     flex: 1 1 200px;
+  }
+
+  .syp-ledger-tools > .syp-input--date {
+    flex: 0 0 170px;
   }
 
   .syp-ledger-tools > .syp-select {

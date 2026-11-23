@@ -50,11 +50,6 @@ export class SidebarComponent {
       path: 'M22 12h-4l-3 9L9 3l-3 9H2',
     },
     {
-      label: 'Current needs',
-      link: '/current-needs',
-      path: 'M9 11l3 3L22 4 M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11',
-    },
-    {
       label: 'Budgets',
       link: '/budgets',
       path: 'M4 4h16v16H4z M4 9h16 M4 14h10',
