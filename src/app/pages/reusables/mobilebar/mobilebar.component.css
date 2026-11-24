@@ -20,3 +20,244 @@
 .syp-mobilebar__action.is-active:hover {
   background: var(--syp-lime-2);
 }
+
+/* ------------------------------------------------------------ account menu */
+
+/* Anchor for the menu; the bar is `position: sticky`, so the panel hangs off
+   this element instead of the viewport. */
+.syp-mobilebar__account {
+  position: relative;
+  display: flex;
+  flex: none;
+}
+
+.syp-mobilebar__action.is-open {
+  background: var(--syp-surface-2);
+  border-color: var(--syp-border-strong);
+}
+
+.syp-accountmenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 60;
+  width: 244px;
+  padding: 8px;
+  border: 1px solid var(--syp-border);
+  border-radius: var(--syp-r-md);
+  background: var(--syp-surface);
+  box-shadow: 0 18px 40px rgba(17, 17, 17, 0.16);
+}
+
+.syp-accountmenu__who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 12px;
+  border-bottom: 1px solid var(--syp-divider);
+  margin-bottom: 6px;
+}
+
+.syp-accountmenu__avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--syp-ink);
+  color: var(--syp-lime);
+  font-family: var(--syp-font-head);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.syp-accountmenu__id {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.syp-accountmenu__name,
+.syp-accountmenu__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.syp-accountmenu__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--syp-ink);
+}
+
+.syp-accountmenu__email {
+  font-size: 12px;
+  color: var(--syp-ink-2);
+}
+
+.syp-accountmenu__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 42px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--syp-r-sm);
+  background: none;
+  color: var(--syp-ink);
+  font-family: var(--syp-font-body);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.syp-accountmenu__item:hover {
+  background: var(--syp-surface-2);
+}
+
+.syp-accountmenu__item:focus-visible {
+  outline: 3px solid var(--syp-lime);
+  outline-offset: -1px;
+}
+
+.syp-accountmenu__item--danger {
+  color: var(--syp-danger);
+}
+
+.syp-accountmenu__item--danger:hover {
+  background: var(--syp-danger-soft);
+}
+
+/* ----------------------------------------------------------- profile sheet */
+
+.syp-sheet__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(17, 17, 17, 0.36);
+}
+
+.syp-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: 10px 18px calc(18px + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--syp-r-xl) var(--syp-r-xl) 0 0;
+  background: var(--syp-surface);
+  box-shadow: 0 -18px 40px rgba(17, 17, 17, 0.18);
+}
+
+@media (min-width: 640px) {
+  .syp-sheet {
+    left: 50%;
+    right: auto;
+    width: 440px;
+    transform: translateX(-50%);
+    border-radius: var(--syp-r-xl);
+    margin-bottom: 12px;
+  }
+}
+
+.syp-sheet__grab {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto 12px;
+  border-radius: 999px;
+  background: var(--syp-border-strong);
+}
+
+.syp-sheet__title {
+  margin: 0 0 14px;
+  font-family: var(--syp-font-head);
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.syp-sheet__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--syp-r);
+  background: var(--syp-surface-2);
+}
+
+.syp-sheet__avatar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--syp-ink);
+  color: var(--syp-lime);
+  font-family: var(--syp-font-head);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.syp-sheet__who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.syp-sheet__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--syp-ink);
+}
+
+.syp-sheet__email {
+  font-size: 13px;
+  color: var(--syp-ink-2);
+  overflow-wrap: anywhere;
+}
+
+.syp-sheet__rows {
+  margin: 14px 0 16px;
+}
+
+.syp-sheet__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--syp-divider);
+}
+
+.syp-sheet__row:last-child {
+  border-bottom: 0;
+}
+
+.syp-sheet__row dt {
+  flex: none;
+  font-size: 13px;
+  color: var(--syp-ink-2);
+}
+
+.syp-sheet__row dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--syp-ink);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.syp-sheet__mono {
+  font-family: var(--syp-font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
