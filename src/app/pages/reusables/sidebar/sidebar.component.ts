@@ -4,6 +4,7 @@ import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { StorageService } from '../../../services/storage.service';
 import { OfflineStoreService } from '../../../services/offline-store.service';
+import { ApiStatusComponent } from '../api-status/api-status.component';
 
 interface NavItem {
   label: string;
@@ -18,7 +19,7 @@ interface NavItem {
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [CommonModule, RouterLink, RouterLinkActive, ApiStatusComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css',
 })

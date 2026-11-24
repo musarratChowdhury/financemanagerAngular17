@@ -2,6 +2,15 @@
   display: contents;
 }
 
+/* Status chip above the account block; the rail is a `space-between` column, so
+   these two stay one child and the nav keeps its place at the top. */
+.syp-sidebar__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
 /* Settings and Sign out sit on one line inside the account block. */
 .syp-account__actions {
   display: flex;

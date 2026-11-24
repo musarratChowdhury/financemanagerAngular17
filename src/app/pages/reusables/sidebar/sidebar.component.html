@@ -31,29 +31,38 @@
     </nav>
   </div>
 
-  <div class="syp-account">
-    <div class="syp-account__avatar" aria-hidden="true">
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-        <circle cx="12" cy="7" r="4"></circle>
-      </svg>
-    </div>
-    <div style="min-width: 0">
-      <div class="syp-account__name">My account</div>
-      <div class="syp-account__actions">
-        <a class="syp-account__action syp-account__link" routerLink="/settings">Settings</a>
-        <button type="button" class="syp-account__action" (click)="signOut()">
-          Sign out
-        </button>
+  <!--
+    API reachability lives with the account block rather than in the rail's nav:
+    it is status, not navigation, and the rail is the only chrome a desktop user
+    gets (the phone app bar is hidden from 1024px up).
+  -->
+  <div class="syp-sidebar__bottom">
+    <app-api-status variant="rail" />
+
+    <div class="syp-account">
+      <div class="syp-account__avatar" aria-hidden="true">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </div>
+      <div style="min-width: 0">
+        <div class="syp-account__name">My account</div>
+        <div class="syp-account__actions">
+          <a class="syp-account__action syp-account__link" routerLink="/settings">Settings</a>
+          <button type="button" class="syp-account__action" (click)="signOut()">
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   </div>

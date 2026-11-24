@@ -1,0 +1,48 @@
+<!--
+  A button, not a badge: tapping it forces a probe, which is the only recovery
+  path a user has when the API is down. `title` and `aria-label` carry the full
+  sentence (state + freshness + what a click does); the label is hidden at very
+  narrow widths, where the glyph and the text alternative still carry the state.
+-->
+<button
+  type="button"
+  [class]="'apistat apistat--' + variant + ' is-' + state()"
+  [attr.aria-label]="description()"
+  [attr.title]="description()"
+  [disabled]="state() === 'checking'"
+  (click)="checkNow()"
+>
+  <span class="apistat__glyph" aria-hidden="true">
+    @switch (state()) {
+      @case ('online') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 6L9 17l-5-5" />
+      </svg>
+      }
+      @case ('offline') {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 6L6 18M6 6l12 12" />
+      </svg>
+      }
+      @default {
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3a9 9 0 1 0 9 9" />
+      </svg>
+      }
+    }
+  </span>
+
+  <span class="apistat__label" aria-hidden="true">{{ label() }}</span>
+</button>
+
+<!--
+  A single live region *outside* the button: inside it, the announcement would
+  compete with the button's own accessible name. Screen-reader only - sighted
+  users get the label and the per-state glyph.
+-->
+<span class="syp-sr-only" role="status" aria-live="polite">{{
+  announcement()
+}}</span>

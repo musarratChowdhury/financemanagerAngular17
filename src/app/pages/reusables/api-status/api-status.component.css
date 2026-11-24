@@ -1,0 +1,135 @@
+:host {
+  display: inline-flex;
+  min-width: 0;
+}
+
+.apistat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--syp-border);
+  background: var(--syp-surface);
+  color: var(--syp-ink-2);
+  font-family: var(--syp-font-body);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.apistat:disabled {
+  cursor: default;
+}
+
+.apistat:focus-visible {
+  outline: 3px solid var(--syp-lime);
+  outline-offset: 2px;
+}
+
+.apistat__glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+}
+
+.apistat__glyph svg {
+  width: 13px;
+  height: 13px;
+}
+
+.apistat__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------- light state */
+
+.apistat.is-online {
+  border-color: var(--syp-lime-2);
+  background: var(--syp-lime-tint);
+  color: var(--syp-lime-ink);
+}
+
+.apistat.is-waking {
+  border-color: var(--syp-warn);
+  background: var(--syp-warn-bg);
+  color: var(--syp-warn-ink);
+}
+
+.apistat.is-offline {
+  border-color: var(--syp-danger);
+  background: var(--syp-danger-soft);
+  color: var(--syp-danger);
+}
+
+/* A probe is in flight, or the API is booting: the arc turns so the chip reads
+   as "working on it" rather than "stopped". */
+.apistat.is-checking .apistat__glyph svg,
+.apistat.is-waking .apistat__glyph svg {
+  animation: apistat-spin 1.1s linear infinite;
+}
+
+@keyframes apistat-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .apistat.is-checking .apistat__glyph svg,
+  .apistat.is-waking .apistat__glyph svg {
+    animation: none;
+  }
+}
+
+/* --------------------------------------------------------------- dark rail */
+
+.apistat--rail {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: var(--syp-sidebar-fg);
+}
+
+.apistat--rail.is-online {
+  border-color: rgba(198, 244, 50, 0.5);
+  background: rgba(198, 244, 50, 0.14);
+  color: var(--syp-lime);
+}
+
+.apistat--rail.is-waking {
+  border-color: rgba(217, 119, 6, 0.6);
+  background: rgba(217, 119, 6, 0.18);
+  color: #f3c07b;
+}
+
+.apistat--rail.is-offline {
+  border-color: rgba(255, 138, 128, 0.6);
+  background: rgba(180, 35, 24, 0.22);
+  color: #ff9d94;
+}
+
+/* ------------------------------------------------------------- phone app bar */
+
+/*
+ * Under 400px the app bar already carries the brand, the screen title and three
+ * 44px icons. Collapsing to the glyph keeps the title readable; the button's
+ * aria-label and the per-state glyph still carry the state, so nothing is lost
+ * to a sighted-but-colour-blind reader either.
+ */
+@media (max-width: 399px) {
+  .apistat--bar {
+    padding: 0 8px;
+  }
+
+  .apistat--bar .apistat__label {
+    display: none;
+  }
+}
