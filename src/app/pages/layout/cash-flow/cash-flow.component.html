@@ -72,13 +72,13 @@
   </div>
 
   <div class="syp-kpi" [class.syp-kpi--danger]="isOver()">
-    <div class="syp-kpi-label">{{ isOver() ? 'Over budget' : 'Remaining' }}</div>
+    <div class="syp-kpi-label">{{ isOver() ? 'Over budget' : 'Savings' }}</div>
     @if (loading()) {
     <div class="syp-skeleton" style="height: 32px; width: 70%"></div>
     } @else {
     <div class="syp-num">{{ moneyNegative(balance()) }}</div>
     <div class="syp-kpi-foot">
-      {{ isOver() ? 'More out than in' : 'Available to save' }}
+      {{ isOver() ? 'OverExpense' : 'Successfully Saved!' }}
     </div>
     }
   </div>
